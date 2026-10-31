@@ -83,10 +83,10 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
         )}
       </View>
 
-      {/* Footer Dues & Settlement / PDF Actions */}
+      {/* Footer Dues & Whole Month Settlement / PDF Actions */}
       <View style={styles.footer}>
         <View>
-          <Text style={styles.dueLabel}>Total Monthly Due</Text>
+          <Text style={styles.dueLabel}>Whole Month Total Due</Text>
           <Text style={[styles.dueAmount, isPaid && styles.settledDueAmount]}>
             {formatINR(summary.totalDue)}
           </Text>
@@ -94,14 +94,14 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
 
         <View style={styles.actionsRow}>
           <Button
-            title="PDF"
+            title="PDF Statement"
             variant="secondary"
             icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
             onPress={handleDownloadPDF}
             style={styles.pdfBtn}
           />
           <Button
-            title={isPaid ? 'Mark Unpaid' : 'Mark as Paid'}
+            title={isPaid ? 'Mark Month Unpaid' : 'Mark Month as Paid'}
             variant={isPaid ? 'secondary' : 'success'}
             icon={
               isPaid ? (

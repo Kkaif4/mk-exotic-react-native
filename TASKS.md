@@ -81,4 +81,13 @@
 - [x] Display real-time filter result counter banner (`Showing X bills for [Customer] in [YYYY-MM]`) with settlement status badge
 - [x] All 6 test suites with 28 tests passing cleanly with 100% green
 
+## Phase 10: PDF Typography & Formatting Fixes, Alternating Row Shading & Default Entity Scoping
+- [x] Fix vendor PDF typography: replaced Unicode rupee characters with standard ASCII (`Rs. `) to eliminate `¹` corruption and letter spacing issues
+- [x] Simplify PDF layout with alternating light gray (`#F5F7FA`) and crisp white (`#FFFFFF`) backgrounds for every table row across both Customer and Vendor PDFs
+- [x] Add default Vendor Name filter (`src/components/vendor/VendorDropdown.tsx`) that automatically defaults to the first vendor, avoiding dumping all vendors at once
+- [x] Maintain default Customer Name filter scoping customer bills to the selected entity
+- [x] Streamline Customer monthly settlement: enforce single one-click whole-month payment toggle (`Mark Month as Paid` / `Mark Month Unpaid`) with zero row-level confusion
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+
 

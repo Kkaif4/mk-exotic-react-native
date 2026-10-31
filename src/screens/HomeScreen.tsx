@@ -15,6 +15,7 @@ import { useBills } from "../hooks/useBills";
 import { useVendors } from "../hooks/useVendors";
 import { BillForm } from "../components/forms/BillForm";
 import { VendorCard } from "../components/vendor/VendorCard";
+import { VendorDropdown } from "../components/vendor/VendorDropdown";
 import { PaymentModal } from "../components/forms/PaymentModal";
 import { CustomerLedgerCard } from "../components/customer/CustomerLedgerCard";
 import { CustomerDropdown } from "../components/customer/CustomerDropdown";
@@ -64,6 +65,7 @@ export function HomeScreen({
     new Date().toISOString().substring(0, 7),
   );
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
+  const [selectedVendorId, setSelectedVendorId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
@@ -111,6 +113,28 @@ export function HomeScreen({
   }, [selectedCustomer, selectedMonth, bills, settlements]);
 
   const showingBillsCount = selectedCustomerSummary?.bills.length || 0;
+
+  // Mandatory Vendor Filter: auto-select default first vendor when vendors exist
+  useEffect(() => {
+    if (vendorSummaries.length > 0) {
+      if (
+        !selectedVendorId ||
+        (selectedVendorId !== "ALL" &&
+          !vendorSummaries.some((v) => v.vendorId === selectedVendorId))
+      ) {
+        setSelectedVendorId(vendorSummaries[0].vendorId);
+      }
+    } else {
+      setSelectedVendorId("");
+    }
+  }, [vendorSummaries, selectedVendorId]);
+
+  const selectedVendorSummary = useMemo(() => {
+    if (!selectedVendorId || selectedVendorId === "ALL") return null;
+    return (
+      vendorSummaries.find((v) => v.vendorId === selectedVendorId) || null
+    );
+  }, [vendorSummaries, selectedVendorId]);
 
   // Overall Statistics
   const stats = useMemo(() => {
@@ -512,9 +536,16 @@ export function HomeScreen({
         ) : null}
       </View>
 
-      {/* Tab 1: Vendors (Lifetime Due — NO MONTH FILTER) */}
+      {/* Tab 1: Vendors (Lifetime Due — Filtered by Default to First Vendor) */}
       {activeTab === "vendors" && (
         <View style={styles.listContainer}>
+          {/* Vendor Searchable Dropdown Filter */}
+          <VendorDropdown
+            vendorSummaries={vendorSummaries}
+            selectedVendorId={selectedVendorId}
+            onSelectVendor={(vId) => setSelectedVendorId(vId)}
+          />
+
           {/* Status Filter Chips */}
           <View style={styles.statusFilterRow}>
             <Pressable
@@ -578,8 +609,82 @@ export function HomeScreen({
                 Settled ({vendorCounts.settled})
               </Text>
             </Pressable>
+
+            <Pressable
+              onPress={() => setVendorStatusFilter("ADVANCE")}
+              style={[
+                styles.filterChip,
+                vendorStatusFilter === "ADVANCE" &&
+                  styles.filterChipAdvanceActive,
+              ]}
+            >
+              <View
+                style={[styles.filterDot, { backgroundColor: colors.information }]}
+              />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  vendorStatusFilter === "ADVANCE" &&
+                    styles.filterChipTextActive,
+                ]}
+              >
+                Advance ({vendorCounts.advance})
+              </Text>
+            </Pressable>
           </View>
-          {filteredVendors.length === 0 ? (
+
+          {/* If specific vendor is selected (default: first vendor), show that vendor's row! */}
+          {selectedVendorSummary ? (
+            <View style={styles.vendorTableWrapper}>
+              <View style={styles.filterResultBanner}>
+                <View style={styles.filterResultLeft}>
+                  <Feather name="truck" size={14} color={colors.information} />
+                  <Text style={styles.filterResultText}>
+                    Showing ledger for <Text style={styles.filterResultName}>{selectedVendorSummary.vendorName}</Text> · {selectedVendorSummary.billCount} bills · {selectedVendorSummary.paymentCount} payments
+                  </Text>
+                </View>
+                <Badge
+                  label={selectedVendorSummary.status === "DUE" ? "DUE PENDING" : selectedVendorSummary.status}
+                  variant={selectedVendorSummary.status === "DUE" ? "due" : selectedVendorSummary.status === "SETTLED" ? "settled" : "advance"}
+                />
+              </View>
+
+              {isDesktop && (
+                <View style={styles.vendorTableHeader}>
+                  <Text style={[styles.vendorTableHeaderText, { flex: 1.6 }]}>
+                    VENDOR & CONTACT
+                  </Text>
+                  <Text style={[styles.vendorTableHeaderText, { flex: 1.2, paddingHorizontal: 12 }]}>
+                    LIFETIME DUE BALANCE
+                  </Text>
+                  <Text style={[styles.vendorTableHeaderText, { width: 175, textAlign: 'right', paddingRight: 14 }]}>
+                    QUICK ACTIONS
+                  </Text>
+                </View>
+              )}
+
+              {(() => {
+                const vendorData = vendors.find(
+                  (v) =>
+                    v.id === selectedVendorSummary.vendorId ||
+                    v.name.toLowerCase() === selectedVendorSummary.vendorName.toLowerCase(),
+                );
+                return (
+                  <VendorCard
+                    key={selectedVendorSummary.vendorId || selectedVendorSummary.vendorName}
+                    summary={selectedVendorSummary}
+                    contactNumber={vendorData?.contactNumber}
+                    notes={vendorData?.notes}
+                    onSelectVendor={onNavigateToVendor}
+                    onOpenPaymentModal={handleOpenPayment}
+                    onDownloadPDF={handleDownloadVendorPDF}
+                    onDeleteBill={handleDeleteBill}
+                    onDeletePayment={handleDeletePayment}
+                  />
+                );
+              })()}
+            </View>
+          ) : filteredVendors.length === 0 ? (
             <View style={styles.emptyCard}>
               <Feather name="inbox" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>

@@ -1,19 +1,19 @@
 /**
  * Universal PDF Statement Generator for MK Exotic Fruits
  * Industrial A4 layout matching official specification in sample_pdf.ts.
- * Clean, high-legibility black & white accounting format with precise typography.
+ * Clean, high-legibility black & white / grayscale accounting format with precise typography.
  */
 
 import { Bill, VendorAuditItem } from './types';
 
-// Palette constants matching sample_pdf.ts
-const BLACK: [number, number, number] = [0, 0, 0];
-const DARK: [number, number, number] = [30, 30, 30];
-const GREY: [number, number, number] = [110, 110, 110];
-const LIGHT: [number, number, number] = [180, 180, 180];
+// Palette constants: simple, high-contrast, professional
+const BLACK: [number, number, number] = [20, 20, 20];
+const DARK: [number, number, number] = [40, 40, 40];
+const GREY: [number, number, number] = [100, 100, 100];
+const LIGHT_BORDER: [number, number, number] = [220, 224, 230];
 const WHITE: [number, number, number] = [255, 255, 255];
-const ROW_ALT: [number, number, number] = [246, 246, 246];
-const HEADER_BG: [number, number, number] = [35, 35, 35];
+const ROW_GRAY: [number, number, number] = [245, 247, 250]; // Alternating gray row background
+const HEADER_BG: [number, number, number] = [35, 45, 58];   // Dark slate/navy table header
 
 const fmtMonth = (m: string) => {
   const [y, mo] = m.split('-');
@@ -23,6 +23,7 @@ const fmtMonth = (m: string) => {
   });
 };
 
+// Use standard ASCII currency formatting without unicode rupee character to prevent WinAnsi font corruption
 const fmtCurrency = (n: number) =>
   n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -98,8 +99,11 @@ export async function generateCustomerMonthlyPDF(
   y += 8;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INFO BLOCK — customer name, period, status, entries
+  // INFO BLOCK — customer name, period, status, total
   // ═══════════════════════════════════════════════════════════════════════════
+
+  const sortedBills = [...bills].sort((a, b) => a.date.localeCompare(b.date));
+  const total = sortedBills.reduce((s, b) => s + b.amount, 0);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
@@ -112,13 +116,14 @@ export async function generateCustomerMonthlyPDF(
 
   // Status Badge on Right
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(9.5);
   if (settlementStatus === 'PAID') {
-    doc.setTextColor(38, 148, 91); // Green
+    doc.setTextColor(30, 140, 60); // Green
+    doc.text('STATUS: FULLY SETTLED (PAID)', PW - M, y, { align: 'right' });
   } else {
-    doc.setTextColor(217, 74, 80); // Red
+    doc.setTextColor(200, 30, 30); // Red
+    doc.text('STATUS: UNPAID (DUE PENDING)', PW - M, y, { align: 'right' });
   }
-  doc.text(`STATUS: ${settlementStatus}`, PW - M, y, { align: 'right' });
 
   y += 6;
 
@@ -127,9 +132,14 @@ export async function generateCustomerMonthlyPDF(
   doc.setTextColor(...GREY);
   doc.text('Period:', M, y);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(...BLACK);
   doc.text(fmtMonth(monthStr), M + 22, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text(`Total Amount: Rs. ${fmtCurrency(total)}`, PW - M, y, { align: 'right' });
 
   y += 6;
 
@@ -138,7 +148,7 @@ export async function generateCustomerMonthlyPDF(
   doc.setTextColor(...GREY);
   doc.text('Total Entries:', M, y);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(...BLACK);
   doc.text(String(bills.length), M + 22, y);
 
@@ -175,8 +185,6 @@ export async function generateCustomerMonthlyPDF(
 
   y += HDR_H;
 
-  const sortedBills = [...bills].sort((a, b) => a.date.localeCompare(b.date));
-
   let pageNum = 1;
 
   if (sortedBills.length === 0) {
@@ -189,12 +197,10 @@ export async function generateCustomerMonthlyPDF(
     sortedBills.forEach((bill, i) => {
       // Page break check
       if (y > PH - 45) {
-        // Bottom border before page break
         doc.setDrawColor(...DARK);
         doc.setLineWidth(0.4);
         doc.line(M, y, PW - M, y);
 
-        // Footer on previous page
         renderFooter(doc, PW, PH, M, pageNum);
         pageNum++;
 
@@ -214,15 +220,20 @@ export async function generateCustomerMonthlyPDF(
         y += HDR_H;
       }
 
-      // Alternating row background
+      // Alternating row background: Gray and White
       if (i % 2 === 0) {
-        doc.setFillColor(...ROW_ALT);
-        doc.rect(M, y, CW, ROW_H, 'F');
+        doc.setFillColor(...ROW_GRAY);
+      } else {
+        doc.setFillColor(...WHITE);
       }
+      doc.rect(M, y, CW, ROW_H, 'F');
+
+      // Thin horizontal dividing line under row
+      doc.setDrawColor(...LIGHT_BORDER);
+      doc.setLineWidth(0.2);
+      doc.line(M, y + ROW_H, PW - M, y + ROW_H);
 
       // Left/right vertical borders
-      doc.setDrawColor(210, 210, 210);
-      doc.setLineWidth(0.2);
       doc.line(M, y, M, y + ROW_H);
       doc.line(PW - M, y, PW - M, y + ROW_H);
 
@@ -243,8 +254,6 @@ export async function generateCustomerMonthlyPDF(
   // TOTAL ROW
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const total = sortedBills.reduce((s, b) => s + b.amount, 0);
-
   // Top border (thick)
   doc.setDrawColor(...BLACK);
   doc.setLineWidth(0.6);
@@ -255,8 +264,8 @@ export async function generateCustomerMonthlyPDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...BLACK);
-  doc.text('TOTAL', M + 4, y + 6);
-  doc.text(fmtCurrency(total), COL_AMT, y + 6, { align: 'right' });
+  doc.text('TOTAL AMOUNT', M + 4, y + 6);
+  doc.text(`Rs. ${fmtCurrency(total)}`, COL_AMT, y + 6, { align: 'right' });
 
   y += 8;
 
@@ -300,7 +309,7 @@ export async function generateVendorLifetimeAuditPDF(
   let y = M;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // HEADER
+  // HEADER — company name, contact, date, rule, document title
   // ═══════════════════════════════════════════════════════════════════════════
 
   doc.setFont('helvetica', 'bold');
@@ -342,7 +351,7 @@ export async function generateVendorLifetimeAuditPDF(
   y += 8;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INFO BLOCK — vendor name, contact, 3-stat financial summary
+  // INFO BLOCK — vendor name, contact, audit type, due status
   // ═══════════════════════════════════════════════════════════════════════════
 
   doc.setFont('helvetica', 'normal');
@@ -356,13 +365,13 @@ export async function generateVendorLifetimeAuditPDF(
 
   // Remaining Due on Right
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   if (remainingDue > 0) {
-    doc.setTextColor(217, 74, 80); // Red
-    doc.text(`REMAINING DUE: ₹${fmtCurrency(remainingDue)}`, PW - M, y, { align: 'right' });
+    doc.setTextColor(200, 30, 30); // Red
+    doc.text(`REMAINING DUE: Rs. ${fmtCurrency(remainingDue)}`, PW - M, y, { align: 'right' });
   } else {
-    doc.setTextColor(38, 148, 91); // Green
-    doc.text('STATUS: FULLY SETTLED', PW - M, y, { align: 'right' });
+    doc.setTextColor(30, 140, 60); // Green
+    doc.text('STATUS: FULLY SETTLED (Rs. 0.00)', PW - M, y, { align: 'right' });
   }
 
   y += 6;
@@ -379,7 +388,7 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...GREY);
-  doc.text(`Purchases: ₹${fmtCurrency(totalPurchases)}  |  Paid: ₹${fmtCurrency(totalPaid)}`, PW - M, y, { align: 'right' });
+  doc.text(`Purchases: Rs. ${fmtCurrency(totalPurchases)}  |  Paid: Rs. ${fmtCurrency(totalPaid)}`, PW - M, y, { align: 'right' });
 
   y += 6;
 
@@ -469,15 +478,20 @@ export async function generateVendorLifetimeAuditPDF(
         y += HDR_H;
       }
 
-      // Alternating row background
+      // Alternating row background: Gray and White
       if (i % 2 === 0) {
-        doc.setFillColor(...ROW_ALT);
-        doc.rect(M, y, CW, ROW_H, 'F');
+        doc.setFillColor(...ROW_GRAY);
+      } else {
+        doc.setFillColor(...WHITE);
       }
+      doc.rect(M, y, CW, ROW_H, 'F');
+
+      // Thin horizontal dividing line under row
+      doc.setDrawColor(...LIGHT_BORDER);
+      doc.setLineWidth(0.2);
+      doc.line(M, y + ROW_H, PW - M, y + ROW_H);
 
       // Left/right vertical borders
-      doc.setDrawColor(210, 210, 210);
-      doc.setLineWidth(0.2);
       doc.line(M, y, M, y + ROW_H);
       doc.line(PW - M, y, PW - M, y + ROW_H);
 
@@ -487,12 +501,7 @@ export async function generateVendorLifetimeAuditPDF(
 
       doc.text(String(i + 1), COL_NO, y + 5.5);
       doc.text(fmtDate(item.date), COL_DATE, y + 5.5);
-
-      const descSnippet =
-        item.description.length > 25
-          ? item.description.substring(0, 24) + '…'
-          : item.description;
-      doc.text(descSnippet, COL_DESC, y + 5.5);
+      doc.text(item.description.substring(0, 34), COL_DESC, y + 5.5);
 
       if (item.debit > 0) {
         doc.text(fmtCurrency(item.debit), COL_DEBIT, y + 5.5, { align: 'right' });
@@ -501,9 +510,7 @@ export async function generateVendorLifetimeAuditPDF(
       }
 
       if (item.credit > 0) {
-        doc.setTextColor(38, 148, 91);
         doc.text(fmtCurrency(item.credit), COL_CREDIT, y + 5.5, { align: 'right' });
-        doc.setTextColor(...DARK);
       } else {
         doc.text('-', COL_CREDIT, y + 5.5, { align: 'right' });
       }
@@ -516,7 +523,7 @@ export async function generateVendorLifetimeAuditPDF(
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // TOTAL / FINAL POSITION ROW
+  // TOTAL SUMMARY ROW
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Top border (thick)
@@ -527,9 +534,9 @@ export async function generateVendorLifetimeAuditPDF(
   y += 1;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(...BLACK);
-  doc.text('LIFETIME POSITION', M + 4, y + 6);
+  doc.text('LIFETIME TOTALS', M + 4, y + 6);
   doc.text(fmtCurrency(totalPurchases), COL_DEBIT, y + 6, { align: 'right' });
   doc.text(fmtCurrency(totalPaid), COL_CREDIT, y + 6, { align: 'right' });
   doc.text(fmtCurrency(remainingDue), COL_BAL, y + 6, { align: 'right' });
@@ -542,7 +549,7 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setLineWidth(0.3);
   doc.line(M, y + 1.2, PW - M, y + 1.2);
 
-  // Render footer
+  // Render footer on final page
   renderFooter(doc, PW, PH, M, pageNum);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -550,10 +557,13 @@ export async function generateVendorLifetimeAuditPDF(
   // ═══════════════════════════════════════════════════════════════════════════
 
   const safeName = vendorName.replace(/[^a-zA-Z0-9]/g, '_');
-  const filename = `MK_${safeName}_Lifetime_Audit.pdf`;
+  const filename = `MK_Vendor_${safeName}_Audit.pdf`;
   doc.save(filename);
 }
 
+/**
+ * Common standardized footer matching sample_pdf.ts
+ */
 function renderFooter(
   doc: any,
   PW: number,
@@ -561,14 +571,19 @@ function renderFooter(
   M: number,
   pageNum: number
 ) {
-  const footerY = PH - 14;
-  doc.setDrawColor(...LIGHT);
-  doc.setLineWidth(0.2);
-  doc.line(M, footerY, PW - M, footerY);
+  const y = PH - 14;
 
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7);
+  doc.setDrawColor(...LIGHT_BORDER);
+  doc.setLineWidth(0.3);
+  doc.line(M, y - 3, PW - M, y - 3);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
   doc.setTextColor(...GREY);
-  doc.text('MK Exotic Fruits — System-generated document', M, footerY + 4);
-  doc.text(`Page ${pageNum}`, PW - M, footerY + 4, { align: 'right' });
+  doc.text(
+    'MK Exotic Fruits  |  Official Accounting Statement  |  Computer Generated',
+    M,
+    y + 2
+  );
+  doc.text(`Page ${pageNum}`, PW - M, y + 2, { align: 'right' });
 }
