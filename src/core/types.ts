@@ -64,6 +64,7 @@ export interface VendorAuditItem {
   paymentMode?: PaymentMode;
   billNumber?: string;
   timestamp: number;    // Epoch ms for sorting
+  totalPurchases?: number;
 }
 
 export interface VendorFinancialSummary {
@@ -76,6 +77,10 @@ export interface VendorFinancialSummary {
   billCount: number;
   paymentCount: number;
   status: 'DUE' | 'SETTLED' | 'ADVANCE' | 'NO_BILLS';
+  thisMonthPurchases?: number;
+  thisMonthPaid?: number;
+  bills?: Bill[];
+  payments?: VendorPayment[];
 }
 
 export interface CustomerMonthSummary {

@@ -52,6 +52,12 @@ export function calculateVendorFinancials(
     status = 'SETTLED';
   }
 
+  const currentMonth = new Date().toISOString().substring(0, 7);
+  const thisMonthBills = vendorBills.filter((b) => b.date && b.date.startsWith(currentMonth));
+  const thisMonthPayments = vendorPayments.filter((p) => p.date && p.date.startsWith(currentMonth));
+  const thisMonthPurchases = sumMoney(thisMonthBills.map((b) => b.amount));
+  const thisMonthPaid = sumMoney(thisMonthPayments.map((p) => p.amount));
+
   return {
     vendorId,
     vendorName,
@@ -62,6 +68,10 @@ export function calculateVendorFinancials(
     billCount: vendorBills.length,
     paymentCount: vendorPayments.length,
     status,
+    thisMonthPurchases,
+    thisMonthPaid,
+    bills: vendorBills,
+    payments: vendorPayments,
   };
 }
 

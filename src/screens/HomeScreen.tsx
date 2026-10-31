@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Pressable,
   useWindowDimensions,
   TextInput,
-  Platform,
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -48,14 +47,16 @@ export function HomeScreen({
     payments,
     vendorSummaries,
     addPayment,
+    deletePayment,
     refreshVendors,
-  } = useVendors();
+  } = useVendors(bills);
 
   const [activeTab, setActiveTab] = useState<'vendors' | 'customers'>('vendors');
   const [selectedMonth, setSelectedMonth] = useState(() =>
     new Date().toISOString().substring(0, 7)
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
 
   const [paymentModalData, setPaymentModalData] = useState<{
@@ -96,6 +97,30 @@ export function HomeScreen({
       monthPurchasesTotal: sumMoney(monthPurchases.map((b) => b.amount)),
     };
   }, [bills]);
+
+  const handleAddBill = useCallback(
+    async (billData: any) => {
+      await addBill(billData);
+      await refreshVendors();
+    },
+    [addBill, refreshVendors]
+  );
+
+  const handleDeleteBill = useCallback(
+    async (id: string) => {
+      await deleteBill(id);
+      await refreshVendors();
+    },
+    [deleteBill, refreshVendors]
+  );
+
+  const handleDeletePayment = useCallback(
+    async (id: string) => {
+      await deletePayment(id);
+      await refreshVendors();
+    },
+    [deletePayment, refreshVendors]
+  );
 
   const handleOpenPayment = useCallback(
     (vendorId: string, vendorName: string, remainingDue: number) => {
@@ -208,15 +233,32 @@ export function HomeScreen({
   // Filtered lists based on search
   const filteredVendors = useMemo(() => {
     if (!searchQuery.trim()) return vendorSummaries;
-    const q = searchQuery.toLowerCase();
-    return vendorSummaries.filter((v) => v.vendorName.toLowerCase().includes(q));
-  }, [vendorSummaries, searchQuery]);
+    const q = searchQuery.toLowerCase().trim();
+    return vendorSummaries.filter((v) => {
+      if (v.vendorName.toLowerCase().includes(q)) return true;
+      const targetVendor = vendors.find(
+        (vnd) => vnd.id === v.vendorId || vnd.name.toLowerCase() === v.vendorName.toLowerCase()
+      );
+      if (targetVendor?.contactNumber?.includes(q)) return true;
+      if (targetVendor?.notes?.toLowerCase().includes(q)) return true;
+      if (v.bills?.some((b) => b.billNumber?.toLowerCase().includes(q))) return true;
+      return false;
+    });
+  }, [vendorSummaries, vendors, searchQuery]);
 
   const filteredCustomers = useMemo(() => {
     if (!searchQuery.trim()) return entityNames.customers;
-    const q = searchQuery.toLowerCase();
-    return entityNames.customers.filter((c) => c.toLowerCase().includes(q));
-  }, [entityNames.customers, searchQuery]);
+    const q = searchQuery.toLowerCase().trim();
+    return entityNames.customers.filter((c) => {
+      if (c.toLowerCase().includes(q)) return true;
+      return bills.some(
+        (b) =>
+          b.type === 'sale' &&
+          b.entityName.toLowerCase() === c.toLowerCase() &&
+          b.billNumber?.toLowerCase().includes(q)
+      );
+    });
+  }, [entityNames.customers, bills, searchQuery]);
 
   // Left column elements (Bill Form + Backup & Data Management)
   const leftColumn = (
@@ -225,7 +267,7 @@ export function HomeScreen({
       <BillForm
         existingNames={entityNames}
         registeredVendors={vendors}
-        onAddBill={addBill}
+        onAddBill={handleAddBill}
       />
 
       {/* Backup & System Data Tools Card */}
@@ -307,64 +349,78 @@ export function HomeScreen({
         </View>
       </View>
 
-      {/* Tabs & Search Header Strip */}
-      <View style={styles.listControlBar}>
-        <View style={styles.segmentControl}>
-          <Pressable
-            onPress={() => setActiveTab('vendors')}
-            style={[styles.segmentBtn, activeTab === 'vendors' && styles.segmentBtnActive]}
-          >
-            <Feather
-              name="truck"
-              size={13}
-              color={activeTab === 'vendors' ? '#ffffff' : '#94a3b8'}
-            />
-            <Text
-              style={[
-                styles.segmentText,
-                activeTab === 'vendors' && styles.segmentTextActive,
-              ]}
-            >
-              Vendors (Lifetime Due)
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setActiveTab('customers')}
-            style={[styles.segmentBtn, activeTab === 'customers' && styles.segmentBtnActive]}
-          >
-            <Feather
-              name="users"
-              size={13}
-              color={activeTab === 'customers' ? '#ffffff' : '#94a3b8'}
-            />
-            <Text
-              style={[
-                styles.segmentText,
-                activeTab === 'customers' && styles.segmentTextActive,
-              ]}
-            >
-              Customers (Monthly)
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchBox}>
-          <Feather name="search" size={14} color="#94a3b8" />
-          <TextInput
-            placeholder={`Search ${activeTab}...`}
-            placeholderTextColor="#64748b"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={styles.searchInput}
+      {/* Tabs Selector Bar */}
+      <View style={styles.segmentControl}>
+        <Pressable
+          onPress={() => setActiveTab('vendors')}
+          style={[styles.segmentBtn, activeTab === 'vendors' && styles.segmentBtnActive]}
+        >
+          <Feather
+            name="truck"
+            size={13}
+            color={activeTab === 'vendors' ? '#ffffff' : '#94a3b8'}
           />
-          {searchQuery ? (
-            <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-              <Feather name="x" size={14} color="#94a3b8" />
-            </Pressable>
-          ) : null}
-        </View>
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === 'vendors' && styles.segmentTextActive,
+            ]}
+          >
+            Vendors (Lifetime Due) ({vendorSummaries.length})
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setActiveTab('customers')}
+          style={[styles.segmentBtn, activeTab === 'customers' && styles.segmentBtnActive]}
+        >
+          <Feather
+            name="users"
+            size={13}
+            color={activeTab === 'customers' ? '#ffffff' : '#94a3b8'}
+          />
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === 'customers' && styles.segmentTextActive,
+            ]}
+          >
+            Customers (Monthly) ({entityNames.customers.length})
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* Modern, Redesigned Search Box */}
+      <View
+        style={[
+          styles.searchContainer,
+          searchFocused && styles.searchContainerFocused,
+        ]}
+      >
+        <Feather
+          name="search"
+          size={16}
+          color={searchFocused ? '#818cf8' : '#94a3b8'}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          placeholder={`Search ${activeTab === 'vendors' ? 'vendors by name, bill #, phone' : 'customers by name, bill #' }...`}
+          placeholderTextColor="#64748b"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          style={styles.searchInput}
+        />
+        {searchQuery ? (
+          <Pressable
+            onPress={() => setSearchQuery('')}
+            hitSlop={10}
+            style={styles.clearSearchBtn}
+          >
+            <Feather name="x" size={14} color="#94a3b8" />
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Tab 1: Vendors (Lifetime Due — NO MONTH FILTER) */}
@@ -395,6 +451,8 @@ export function HomeScreen({
                   onSelectVendor={onNavigateToVendor}
                   onOpenPaymentModal={handleOpenPayment}
                   onDownloadPDF={handleDownloadVendorPDF}
+                  onDeleteBill={handleDeleteBill}
+                  onDeletePayment={handleDeletePayment}
                 />
               );
             })
@@ -442,7 +500,7 @@ export function HomeScreen({
                   key={custName}
                   summary={summary}
                   onToggleSettlement={handleToggleSettlement}
-                  onDeleteBill={deleteBill}
+                  onDeleteBill={handleDeleteBill}
                 />
               );
             })
@@ -500,14 +558,15 @@ export function HomeScreen({
           onClose={() =>
             setPaymentModalData((prev) => ({ ...prev, visible: false }))
           }
-          onSavePayment={({ amount, date, paymentMode, referenceNote }) => {
-            addPayment({
+          onSavePayment={async ({ amount, date, paymentMode, referenceNote }) => {
+            await addPayment({
               vendorId: paymentModalData.vendorId,
               amount,
               date,
               paymentMode,
               referenceNote,
             });
+            await refreshVendors();
           }}
         />
       )}
@@ -670,20 +729,13 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 3,
   },
-  listControlBar: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
   segmentControl: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 3,
     borderWidth: 1,
     borderColor: '#1e293b',
-    flex: 1,
   },
   segmentBtn: {
     flex: 1,
@@ -691,8 +743,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 9,
-    borderRadius: 7,
+    paddingVertical: 10,
+    borderRadius: 9,
   },
   segmentBtnActive: {
     backgroundColor: '#1e293b',
@@ -706,23 +758,33 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
   },
-  searchBox: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0b1329',
-    borderWidth: 1,
+    backgroundColor: '#0f172a',
+    borderWidth: 1.5,
     borderColor: '#1e293b',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    gap: 8,
-    minWidth: 200,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  searchContainerFocused: {
+    borderColor: '#6366f1',
+    backgroundColor: '#0d1527',
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
     color: '#ffffff',
-    fontSize: 12,
-    padding: 0,
+    fontSize: 13,
     flex: 1,
+    padding: 0,
+  },
+  clearSearchBtn: {
+    padding: 4,
+    backgroundColor: '#1e293b',
+    borderRadius: 10,
   },
   monthSelectorBar: {
     flexDirection: 'row',
@@ -760,7 +822,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContainer: {
-    marginTop: 4,
+    marginTop: 2,
   },
   emptyCard: {
     backgroundColor: '#0b1329',

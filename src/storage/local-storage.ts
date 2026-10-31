@@ -60,8 +60,29 @@ export class NativeAppStorage implements IAppStorage {
   async addBill(billData: Omit<Bill, 'id' | 'createdAt' | 'updatedAt'>): Promise<Bill> {
     const bills = await this.getBills();
     const now = new Date().toISOString();
+    let vendorId = billData.vendorId;
+
+    // If purchase bill, ensure the vendor entity is registered
+    if (billData.type === 'purchase' && billData.entityName) {
+      const vendors = await this.getVendors();
+      const norm = billData.entityName.trim().toLowerCase();
+      const existingVendor = vendors.find(
+        (v) => (vendorId && v.id === vendorId) || v.name.trim().toLowerCase() === norm
+      );
+
+      if (existingVendor) {
+        vendorId = existingVendor.id;
+      } else {
+        const createdVendor = await this.addVendor({
+          name: billData.entityName.trim(),
+        });
+        vendorId = createdVendor.id;
+      }
+    }
+
     const newBill: Bill = {
       ...billData,
+      vendorId,
       id: 'bill_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       createdAt: now,
       updatedAt: now,
@@ -125,7 +146,36 @@ export class NativeAppStorage implements IAppStorage {
 
   async getVendors(): Promise<Vendor[]> {
     const raw = await getItem(KEYS.VENDORS);
-    return raw ? JSON.parse(raw) : [];
+    let vendors: Vendor[] = raw ? JSON.parse(raw) : [];
+
+    // Auto-discover and backfill any vendors from purchase bills
+    const rawBills = await getItem(KEYS.BILLS);
+    const bills: Bill[] = rawBills ? JSON.parse(rawBills) : [];
+    let hasNew = false;
+
+    for (const b of bills) {
+      if (b.type === 'purchase' && b.entityName) {
+        const norm = b.entityName.trim().toLowerCase();
+        const exists = vendors.some(
+          (v) => v.name.trim().toLowerCase() === norm || (b.vendorId && v.id === b.vendorId)
+        );
+        if (!exists) {
+          vendors.push({
+            id: b.vendorId || ('v_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+            name: b.entityName.trim(),
+            createdAt: b.createdAt || new Date().toISOString(),
+            updatedAt: b.updatedAt || new Date().toISOString(),
+          });
+          hasNew = true;
+        }
+      }
+    }
+
+    if (hasNew) {
+      await this.saveVendors(vendors);
+    }
+
+    return vendors;
   }
 
   async saveVendors(vendors: Vendor[]): Promise<void> {

@@ -4,11 +4,12 @@ import { defaultStorage } from '../storage/local-storage';
 import { useBills } from './useBills';
 import { calculateVendorFinancials } from '../core/ledger';
 
-export function useVendors() {
+export function useVendors(passedBills?: Bill[]) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { bills, refreshBills } = useBills();
+  const { bills: internalBills } = useBills();
+  const bills = passedBills || internalBills;
 
   const refreshVendors = useCallback(async () => {
     try {
@@ -71,9 +72,25 @@ export function useVendors() {
     [refreshVendors]
   );
 
-  // Compute live lifetime financial rankings for all vendors
+  // Compute live lifetime financial rankings for all vendors (from vendor entities + purchase bills)
   const vendorSummaries: VendorFinancialSummary[] = useMemo(() => {
-    return vendors.map((v) =>
+    // Unique list of vendors by name / id
+    const vendorMap = new Map<string, { id: string; name: string }>();
+
+    vendors.forEach((v) => {
+      vendorMap.set(v.name.trim().toLowerCase(), { id: v.id, name: v.name });
+    });
+
+    bills.forEach((b) => {
+      if (b.type === 'purchase' && b.entityName) {
+        const key = b.entityName.trim().toLowerCase();
+        if (!vendorMap.has(key)) {
+          vendorMap.set(key, { id: b.vendorId || ('v_' + key), name: b.entityName.trim() });
+        }
+      }
+    });
+
+    return Array.from(vendorMap.values()).map((v) =>
       calculateVendorFinancials(v.id, v.name, bills, payments)
     );
   }, [vendors, bills, payments]);

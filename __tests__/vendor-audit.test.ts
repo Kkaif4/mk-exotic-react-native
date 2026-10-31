@@ -269,4 +269,44 @@ describe('Vendor Audit & Lifetime Balance Tests', () => {
     expect(timeline[3].id).toBe('b1');
     expect(timeline[3].runningBalance).toBe(20000);
   });
+
+  test('calculateVendorFinancials attaches bills, payments and monthly breakdown', () => {
+    const curMonth = new Date().toISOString().substring(0, 7);
+    const bills: Bill[] = [
+      {
+        id: 'b_cur',
+        type: 'purchase',
+        entityName: 'Texxt Vendor',
+        vendorId: 'v_texxt',
+        billNumber: 'INV-TXT-01',
+        date: `${curMonth}-05`,
+        amount: 35000,
+        createdAt: '2026-10-05T10:00:00Z',
+        updatedAt: '2026-10-05T10:00:00Z',
+      },
+    ];
+    const payments: VendorPayment[] = [
+      {
+        id: 'p_cur',
+        vendorId: 'v_texxt',
+        amount: 15000,
+        date: `${curMonth}-06`,
+        paymentMode: 'UPI',
+        createdAt: '2026-10-06T10:00:00Z',
+        updatedAt: '2026-10-06T10:00:00Z',
+      },
+    ];
+
+    const summary = calculateVendorFinancials('v_texxt', 'Texxt Vendor', bills, payments);
+
+    expect(summary.totalPurchases).toBe(35000);
+    expect(summary.totalPaid).toBe(15000);
+    expect(summary.remainingDue).toBe(20000);
+    expect(summary.thisMonthPurchases).toBe(35000);
+    expect(summary.thisMonthPaid).toBe(15000);
+    expect(summary.bills).toHaveLength(1);
+    expect(summary.payments).toHaveLength(1);
+    expect(summary.bills?.[0].billNumber).toBe('INV-TXT-01');
+    expect(summary.payments?.[0].paymentMode).toBe('UPI');
+  });
 });

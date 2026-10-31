@@ -119,4 +119,21 @@ describe('Backup, Export & Import Invariants', () => {
     expect(mergedBills).toHaveLength(1);
     expect(mergedBills[0].amount).toBe(80000);
   });
+
+  test('addBill automatically registers unknown vendor and links vendorId', async () => {
+    const newBill = await defaultStorage.addBill({
+      type: 'purchase',
+      entityName: 'Texxt Vendor Fresh',
+      billNumber: 'INV-NEW-99',
+      date: '2026-10-10',
+      amount: 42000,
+    });
+
+    expect(newBill.vendorId).toBeDefined();
+
+    const vendors = await defaultStorage.getVendors();
+    const found = vendors.find((v) => v.name === 'Texxt Vendor Fresh');
+    expect(found).toBeDefined();
+    expect(found?.id).toBe(newBill.vendorId);
+  });
 });
