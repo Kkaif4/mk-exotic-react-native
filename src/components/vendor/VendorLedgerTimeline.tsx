@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { VendorAuditItem } from '../../core/types';
 import { formatINR } from '../../core/math';
 import { colors } from '../../core/theme';
+import { confirmDelete } from '../../core/confirm';
 
 interface VendorLedgerTimelineProps {
   timeline: VendorAuditItem[];
@@ -42,8 +43,12 @@ export const VendorLedgerTimeline = React.memo(function VendorLedgerTimeline({
           </Text>
           <Pressable
             onPress={() => {
-              if (isBill && onDeleteBill) onDeleteBill(item.id);
-              if (!isBill && onDeletePayment) onDeletePayment(item.id);
+              if (isBill && onDeleteBill) {
+                confirmDelete('bill', () => onDeleteBill(item.id), item.description);
+              }
+              if (!isBill && onDeletePayment) {
+                confirmDelete('payment', () => onDeletePayment(item.id), item.description);
+              }
             }}
             hitSlop={10}
             style={styles.deleteButton}

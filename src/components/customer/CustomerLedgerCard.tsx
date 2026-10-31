@@ -8,6 +8,7 @@ import { CustomerMonthSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
 import { generateCustomerMonthlyPDF } from '../../core/pdf';
 import { colors } from '../../core/theme';
+import { confirmDelete } from '../../core/confirm';
 
 interface CustomerLedgerCardProps {
   summary: CustomerMonthSummary;
@@ -64,7 +65,13 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
               <View style={styles.billRight}>
                 <Text style={styles.billAmount}>{formatINR(bill.amount)}</Text>
                 <Pressable
-                  onPress={() => onDeleteBill(bill.id)}
+                  onPress={() =>
+                    confirmDelete(
+                      'bill',
+                      () => onDeleteBill(bill.id),
+                      bill.billNumber ? `Bill #${bill.billNumber}` : `₹${formatINR(bill.amount)}`
+                    )
+                  }
                   hitSlop={8}
                   style={styles.deleteButton}
                 >

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,30 +9,30 @@ import {
   useWindowDimensions,
   TextInput,
   Alert,
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { useBills } from '../hooks/useBills';
-import { useVendors } from '../hooks/useVendors';
-import { BillForm } from '../components/forms/BillForm';
-import { VendorCard } from '../components/vendor/VendorCard';
-import { PaymentModal } from '../components/forms/PaymentModal';
-import { CustomerLedgerCard } from '../components/customer/CustomerLedgerCard';
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useBills } from "../hooks/useBills";
+import { useVendors } from "../hooks/useVendors";
+import { BillForm } from "../components/forms/BillForm";
+import { VendorCard } from "../components/vendor/VendorCard";
+import { PaymentModal } from "../components/forms/PaymentModal";
+import { CustomerLedgerCard } from "../components/customer/CustomerLedgerCard";
 import {
   getUniqueEntityNames,
   calculateCustomerMonthSummary,
   generateVendorAuditTimeline,
-} from '../core/ledger';
-import { formatINR, sumMoney } from '../core/math';
-import { defaultStorage } from '../storage/local-storage';
-import { Card } from '../components/common/Card';
-import { Button } from '../components/common/Button';
+} from "../core/ledger";
+import { formatINR, sumMoney } from "../core/math";
+import { defaultStorage } from "../storage/local-storage";
+import { Card } from "../components/common/Card";
+import { Button } from "../components/common/Button";
 import {
   exportFullJSONBackup,
   importJSONBackup,
   exportCSVReports,
-} from '../core/backup';
-import { generateVendorLifetimeAuditPDF } from '../core/pdf';
-import { colors } from '../core/theme';
+} from "../core/backup";
+import { generateVendorLifetimeAuditPDF } from "../core/pdf";
+import { colors } from "../core/theme";
 
 export function HomeScreen({
   onNavigateToVendor,
@@ -53,10 +53,11 @@ export function HomeScreen({
   } = useVendors(bills);
 
   const [activeTab, setActiveTab] = useState<'vendors' | 'customers'>('vendors');
+  const [vendorStatusFilter, setVendorStatusFilter] = useState<'ALL' | 'DUE' | 'SETTLED' | 'ADVANCE'>('ALL');
   const [selectedMonth, setSelectedMonth] = useState(() =>
-    new Date().toISOString().substring(0, 7)
+    new Date().toISOString().substring(0, 7),
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
 
@@ -67,8 +68,8 @@ export function HomeScreen({
     currentDue: number;
   }>({
     visible: false,
-    vendorId: '',
-    vendorName: '',
+    vendorId: "",
+    vendorName: "",
     currentDue: 0,
   });
 
@@ -77,23 +78,23 @@ export function HomeScreen({
   // Unique names for autocomplete
   const entityNames = useMemo(
     () => getUniqueEntityNames(bills, vendors),
-    [bills, vendors]
+    [bills, vendors],
   );
 
   // Overall Statistics
   const stats = useMemo(() => {
     const currentMonth = new Date().toISOString().substring(0, 7);
     const monthSales = bills.filter(
-      (b) => b.type === 'sale' && b.date.startsWith(currentMonth)
+      (b) => b.type === "sale" && b.date.startsWith(currentMonth),
     );
     const monthPurchases = bills.filter(
-      (b) => b.type === 'purchase' && b.date.startsWith(currentMonth)
+      (b) => b.type === "purchase" && b.date.startsWith(currentMonth),
     );
 
     return {
       totalBills: bills.length,
-      salesCount: bills.filter((b) => b.type === 'sale').length,
-      purchasesCount: bills.filter((b) => b.type === 'purchase').length,
+      salesCount: bills.filter((b) => b.type === "sale").length,
+      purchasesCount: bills.filter((b) => b.type === "purchase").length,
       monthSalesTotal: sumMoney(monthSales.map((b) => b.amount)),
       monthPurchasesTotal: sumMoney(monthPurchases.map((b) => b.amount)),
     };
@@ -104,7 +105,7 @@ export function HomeScreen({
       await addBill(billData);
       await refreshVendors();
     },
-    [addBill, refreshVendors]
+    [addBill, refreshVendors],
   );
 
   const handleDeleteBill = useCallback(
@@ -112,7 +113,7 @@ export function HomeScreen({
       await deleteBill(id);
       await refreshVendors();
     },
-    [deleteBill, refreshVendors]
+    [deleteBill, refreshVendors],
   );
 
   const handleDeletePayment = useCallback(
@@ -120,7 +121,7 @@ export function HomeScreen({
       await deletePayment(id);
       await refreshVendors();
     },
-    [deletePayment, refreshVendors]
+    [deletePayment, refreshVendors],
   );
 
   const handleOpenPayment = useCallback(
@@ -132,7 +133,7 @@ export function HomeScreen({
         currentDue: remainingDue,
       });
     },
-    []
+    [],
   );
 
   const handleToggleSettlement = useCallback(
@@ -141,19 +142,28 @@ export function HomeScreen({
       const updated = await defaultStorage.getSettlements();
       setSettlements(updated);
     },
-    []
+    [],
   );
 
   const handleDownloadVendorPDF = useCallback(
     async (vendorId: string, vendorName: string) => {
       const summary = vendorSummaries.find(
-        (s) => s.vendorId === vendorId || s.vendorName.toLowerCase() === vendorName.toLowerCase()
+        (s) =>
+          s.vendorId === vendorId ||
+          s.vendorName.toLowerCase() === vendorName.toLowerCase(),
       );
       if (!summary) return;
       const targetVendor = vendors.find(
-        (v) => v.id === vendorId || v.name.toLowerCase() === vendorName.toLowerCase()
+        (v) =>
+          v.id === vendorId ||
+          v.name.toLowerCase() === vendorName.toLowerCase(),
       );
-      const timeline = generateVendorAuditTimeline(vendorId, vendorName, bills, payments);
+      const timeline = generateVendorAuditTimeline(
+        vendorId,
+        vendorName,
+        bills,
+        payments,
+      );
 
       await generateVendorLifetimeAuditPDF(
         summary.vendorName,
@@ -161,18 +171,18 @@ export function HomeScreen({
         summary.totalPurchases,
         summary.totalPaid,
         summary.remainingDue,
-        timeline
+        timeline,
       );
     },
-    [vendorSummaries, vendors, bills, payments]
+    [vendorSummaries, vendors, bills, payments],
   );
 
   // Backup & Restore Actions
   const handleExportJSON = async () => {
     try {
-      setBackupStatus('Exporting full database JSON...');
+      setBackupStatus("Exporting full database JSON...");
       await exportFullJSONBackup();
-      setBackupStatus('Backup exported successfully.');
+      setBackupStatus("Backup exported successfully.");
       setTimeout(() => setBackupStatus(null), 4000);
     } catch (err: any) {
       setBackupStatus(`Export failed: ${err.message}`);
@@ -181,9 +191,9 @@ export function HomeScreen({
 
   const handleExportCSV = async () => {
     try {
-      setBackupStatus('Generating CSV reports...');
+      setBackupStatus("Generating CSV reports...");
       await exportCSVReports();
-      setBackupStatus('CSV reports exported successfully.');
+      setBackupStatus("CSV reports exported successfully.");
       setTimeout(() => setBackupStatus(null), 4000);
     } catch (err: any) {
       setBackupStatus(`CSV export failed: ${err.message}`);
@@ -198,7 +208,7 @@ export function HomeScreen({
       try {
         const res = await importJSONBackup(text);
         if (res.success) {
-          setBackupStatus('Database restored & merged successfully!');
+          setBackupStatus("Database restored & merged successfully!");
           await Promise.all([refreshBills(), refreshVendors()]);
         } else {
           setBackupStatus(`Import failed: ${res.error}`);
@@ -212,14 +222,14 @@ export function HomeScreen({
   };
 
   const triggerFileInput = () => {
-    if (typeof document !== 'undefined') {
-      const existing = document.getElementById('backup-file-input');
+    if (typeof document !== "undefined") {
+      const existing = document.getElementById("backup-file-input");
       if (existing) existing.remove();
-      const input = document.createElement('input');
-      input.id = 'backup-file-input';
-      input.type = 'file';
-      input.accept = '.json,application/json';
-      input.style.display = 'none';
+      const input = document.createElement("input");
+      input.id = "backup-file-input";
+      input.type = "file";
+      input.accept = ".json,application/json";
+      input.style.display = "none";
       input.onchange = (e: any) => {
         const file = e.target?.files?.[0];
         if (file) handleImportFile(file);
@@ -227,25 +237,45 @@ export function HomeScreen({
       document.body.appendChild(input);
       input.click();
     } else {
-      Alert.alert('Backup Import', 'File upload is supported in browser/desktop environment.');
+      Alert.alert(
+        "Backup Import",
+        "File upload is supported in browser/desktop environment.",
+      );
     }
   };
 
-  // Filtered lists based on search
+  // Vendor status breakdown counts
+  const vendorCounts = useMemo(() => {
+    return {
+      all: vendorSummaries.length,
+      due: vendorSummaries.filter((v) => v.status === 'DUE').length,
+      settled: vendorSummaries.filter((v) => v.status === 'SETTLED').length,
+      advance: vendorSummaries.filter((v) => v.status === 'ADVANCE').length,
+    };
+  }, [vendorSummaries]);
+
+  // Filtered lists based on search & status filter
   const filteredVendors = useMemo(() => {
-    if (!searchQuery.trim()) return vendorSummaries;
+    let list = vendorSummaries;
+    if (vendorStatusFilter !== 'ALL') {
+      list = list.filter((v) => v.status === vendorStatusFilter);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return vendorSummaries.filter((v) => {
+    return list.filter((v) => {
       if (v.vendorName.toLowerCase().includes(q)) return true;
       const targetVendor = vendors.find(
-        (vnd) => vnd.id === v.vendorId || vnd.name.toLowerCase() === v.vendorName.toLowerCase()
+        (vnd) =>
+          vnd.id === v.vendorId ||
+          vnd.name.toLowerCase() === v.vendorName.toLowerCase(),
       );
       if (targetVendor?.contactNumber?.includes(q)) return true;
       if (targetVendor?.notes?.toLowerCase().includes(q)) return true;
-      if (v.bills?.some((b) => b.billNumber?.toLowerCase().includes(q))) return true;
+      if (v.bills?.some((b) => b.billNumber?.toLowerCase().includes(q)))
+        return true;
       return false;
     });
-  }, [vendorSummaries, vendors, searchQuery]);
+  }, [vendorSummaries, vendors, vendorStatusFilter, searchQuery]);
 
   const filteredCustomers = useMemo(() => {
     if (!searchQuery.trim()) return entityNames.customers;
@@ -254,9 +284,9 @@ export function HomeScreen({
       if (c.toLowerCase().includes(q)) return true;
       return bills.some(
         (b) =>
-          b.type === 'sale' &&
+          b.type === "sale" &&
           b.entityName.toLowerCase() === c.toLowerCase() &&
-          b.billNumber?.toLowerCase().includes(q)
+          b.billNumber?.toLowerCase().includes(q),
       );
     });
   }, [entityNames.customers, bills, searchQuery]);
@@ -292,21 +322,27 @@ export function HomeScreen({
           <Button
             title="Export Backup (JSON)"
             variant="secondary"
-            icon={<Feather name="download" size={13} color={colors.textPrimary} />}
+            icon={
+              <Feather name="download" size={13} color={colors.textPrimary} />
+            }
             onPress={handleExportJSON}
             style={styles.backupBtn}
           />
           <Button
             title="Import Backup (JSON)"
             variant="secondary"
-            icon={<Feather name="upload" size={13} color={colors.textPrimary} />}
+            icon={
+              <Feather name="upload" size={13} color={colors.textPrimary} />
+            }
             onPress={triggerFileInput}
             style={styles.backupBtn}
           />
           <Button
             title="Export Reports (CSV)"
             variant="secondary"
-            icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
+            icon={
+              <Feather name="file-text" size={13} color={colors.textPrimary} />
+            }
             onPress={handleExportCSV}
             style={styles.backupBtn}
           />
@@ -334,9 +370,15 @@ export function HomeScreen({
         <View style={styles.statCard}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitleGreen}>Month Sales</Text>
-            <Feather name="trending-up" size={13} color={colors.brandHighlight} />
+            <Feather
+              name="trending-up"
+              size={13}
+              color={colors.brandHighlight}
+            />
           </View>
-          <Text style={styles.statValGreen}>{formatINR(stats.monthSalesTotal)}</Text>
+          <Text style={styles.statValGreen}>
+            {formatINR(stats.monthSalesTotal)}
+          </Text>
           <Text style={styles.statSubText}>Customer Outstandings</Text>
         </View>
 
@@ -345,7 +387,9 @@ export function HomeScreen({
             <Text style={styles.statTitleIndigo}>Month Purchases</Text>
             <Feather name="shopping-bag" size={13} color={colors.information} />
           </View>
-          <Text style={styles.statValIndigo}>{formatINR(stats.monthPurchasesTotal)}</Text>
+          <Text style={styles.statValIndigo}>
+            {formatINR(stats.monthPurchasesTotal)}
+          </Text>
           <Text style={styles.statSubText}>Vendor Procurements</Text>
         </View>
       </View>
@@ -353,40 +397,53 @@ export function HomeScreen({
       {/* Tabs Selector Bar */}
       <View style={styles.segmentControl}>
         <Pressable
-          onPress={() => setActiveTab('vendors')}
-          style={[styles.segmentBtn, activeTab === 'vendors' && styles.segmentBtnActive]}
-        >
-          <Feather
-            name="truck"
-            size={13}
-            color={activeTab === 'vendors' ? colors.textPrimary : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === 'vendors' && styles.segmentTextActive,
-            ]}
-          >
-            Vendors (Lifetime Due) ({vendorSummaries.length})
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setActiveTab('customers')}
-          style={[styles.segmentBtn, activeTab === 'customers' && styles.segmentBtnActive]}
+          onPress={() => setActiveTab("customers")}
+          style={[
+            styles.segmentBtn,
+            activeTab === "customers" && styles.segmentBtnActive,
+          ]}
         >
           <Feather
             name="users"
             size={13}
-            color={activeTab === 'customers' ? colors.textPrimary : colors.textSecondary}
+            color={
+              activeTab === "customers"
+                ? colors.textPrimary
+                : colors.textSecondary
+            }
           />
           <Text
             style={[
               styles.segmentText,
-              activeTab === 'customers' && styles.segmentTextActive,
+              activeTab === "customers" && styles.segmentTextActive,
             ]}
           >
             Customers (Monthly) ({entityNames.customers.length})
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => setActiveTab("vendors")}
+          style={[
+            styles.segmentBtn,
+            activeTab === "vendors" && styles.segmentBtnActive,
+          ]}
+        >
+          <Feather
+            name="truck"
+            size={13}
+            color={
+              activeTab === "vendors"
+                ? colors.textPrimary
+                : colors.textSecondary
+            }
+          />
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === "vendors" && styles.segmentTextActive,
+            ]}
+          >
+            Vendors (Lifetime Due) ({vendorSummaries.length})
           </Text>
         </Pressable>
       </View>
@@ -405,7 +462,7 @@ export function HomeScreen({
           style={styles.searchIcon}
         />
         <TextInput
-          placeholder={`Search ${activeTab === 'vendors' ? 'vendors by name, bill #, phone' : 'customers by name, bill #' }...`}
+          placeholder={`Search ${activeTab === "vendors" ? "vendors by name, bill #, phone" : "customers by name, bill #"}...`}
           placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -415,7 +472,7 @@ export function HomeScreen({
         />
         {searchQuery ? (
           <Pressable
-            onPress={() => setSearchQuery('')}
+            onPress={() => setSearchQuery("")}
             hitSlop={10}
             style={styles.clearSearchBtn}
           >
@@ -427,13 +484,86 @@ export function HomeScreen({
       {/* Tab 1: Vendors (Lifetime Due — NO MONTH FILTER) */}
       {activeTab === 'vendors' && (
         <View style={styles.listContainer}>
+          {/* Status Filter Chips */}
+          <View style={styles.statusFilterRow}>
+            <Pressable
+              onPress={() => setVendorStatusFilter('ALL')}
+              style={[
+                styles.filterChip,
+                vendorStatusFilter === 'ALL' && styles.filterChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  vendorStatusFilter === 'ALL' && styles.filterChipTextActive,
+                ]}
+              >
+                All ({vendorCounts.all})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setVendorStatusFilter('DUE')}
+              style={[
+                styles.filterChip,
+                vendorStatusFilter === 'DUE' && styles.filterChipDueActive,
+              ]}
+            >
+              <View style={[styles.filterDot, { backgroundColor: colors.danger }]} />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  vendorStatusFilter === 'DUE' && styles.filterChipTextActive,
+                ]}
+              >
+                Due Pending ({vendorCounts.due})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setVendorStatusFilter('SETTLED')}
+              style={[
+                styles.filterChip,
+                vendorStatusFilter === 'SETTLED' && styles.filterChipSettledActive,
+              ]}
+            >
+              <View style={[styles.filterDot, { backgroundColor: colors.brandHighlight }]} />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  vendorStatusFilter === 'SETTLED' && styles.filterChipTextActive,
+                ]}
+              >
+                Settled ({vendorCounts.settled})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setVendorStatusFilter('ADVANCE')}
+              style={[
+                styles.filterChip,
+                vendorStatusFilter === 'ADVANCE' && styles.filterChipAdvanceActive,
+              ]}
+            >
+              <View style={[styles.filterDot, { backgroundColor: colors.information }]} />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  vendorStatusFilter === 'ADVANCE' && styles.filterChipTextActive,
+                ]}
+              >
+                Advance ({vendorCounts.advance})
+              </Text>
+            </Pressable>
+          </View>
           {filteredVendors.length === 0 ? (
             <View style={styles.emptyCard}>
               <Feather name="inbox" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>
                 {searchQuery
                   ? `No vendors found matching "${searchQuery}".`
-                  : 'No vendors logged yet. Add a purchase bill to track lifetime due.'}
+                  : "No vendors logged yet. Add a purchase bill to track lifetime due."}
               </Text>
             </View>
           ) : (
@@ -441,7 +571,7 @@ export function HomeScreen({
               const vendorData = vendors.find(
                 (v) =>
                   v.id === summary.vendorId ||
-                  v.name.toLowerCase() === summary.vendorName.toLowerCase()
+                  v.name.toLowerCase() === summary.vendorName.toLowerCase(),
               );
               return (
                 <VendorCard
@@ -462,7 +592,7 @@ export function HomeScreen({
       )}
 
       {/* Tab 2: Customers (Monthly Settlement View) */}
-      {activeTab === 'customers' && (
+      {activeTab === "customers" && (
         <View style={styles.listContainer}>
           {/* Month Selector Strip */}
           <View style={styles.monthSelectorBar}>
@@ -485,7 +615,7 @@ export function HomeScreen({
               <Text style={styles.emptyMsg}>
                 {searchQuery
                   ? `No customers found matching "${searchQuery}".`
-                  : 'No customer sales recorded yet.'}
+                  : "No customer sales recorded yet."}
               </Text>
             </View>
           ) : (
@@ -494,7 +624,7 @@ export function HomeScreen({
                 custName,
                 selectedMonth,
                 bills,
-                settlements
+                settlements,
               );
               return (
                 <CustomerLedgerCard
@@ -559,7 +689,12 @@ export function HomeScreen({
           onClose={() =>
             setPaymentModalData((prev) => ({ ...prev, visible: false }))
           }
-          onSavePayment={async ({ amount, date, paymentMode, referenceNote }) => {
+          onSavePayment={async ({
+            amount,
+            date,
+            paymentMode,
+            referenceNote,
+          }) => {
             await addPayment({
               vendorId: paymentModalData.vendorId,
               amount,
@@ -584,36 +719,36 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
     maxWidth: 1400,
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 18,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingBottom: 14,
   },
   brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   logoBadge: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(57, 124, 194, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(57, 124, 194, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
   appTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     color: colors.textPrimary,
     letterSpacing: -0.5,
   },
@@ -623,12 +758,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   onlineBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     backgroundColor: colors.surface,
     paddingHorizontal: 10,
@@ -646,12 +781,12 @@ const styles = StyleSheet.create({
   onlineText: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   desktopGrid: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 18,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   desktopLeft: {
     width: 440,
@@ -660,7 +795,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mobileColumn: {
-    flexDirection: 'column',
+    flexDirection: "column",
     gap: 16,
   },
   leftColContainer: {
@@ -670,7 +805,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   statsStrip: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
   },
   statCard: {
@@ -682,48 +817,48 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   statIconRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   statTitle: {
     fontSize: 10,
     color: colors.textSecondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   statTitleGreen: {
     fontSize: 10,
     color: colors.brandHighlight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   statTitleIndigo: {
     fontSize: 10,
     color: colors.information,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   statMainVal: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     color: colors.textPrimary,
     marginTop: 4,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
   },
   statValGreen: {
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: "900",
     color: colors.brandHighlight,
     marginTop: 4,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
   },
   statValIndigo: {
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: "900",
     color: colors.information,
     marginTop: 4,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
   },
   statSubText: {
     fontSize: 10,
@@ -731,7 +866,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   segmentControl: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 3,
@@ -740,9 +875,9 @@ const styles = StyleSheet.create({
   },
   segmentBtn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     paddingVertical: 10,
     borderRadius: 9,
@@ -752,16 +887,16 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.textSecondary,
   },
   segmentTextActive: {
     color: colors.textPrimary,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -788,8 +923,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   monthSelectorBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     backgroundColor: colors.surface,
     padding: 8,
@@ -801,7 +936,7 @@ const styles = StyleSheet.create({
   monthSelectLabel: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   monthInput: {
     backgroundColor: colors.appBackground,
@@ -813,17 +948,64 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     fontSize: 12,
     width: 90,
-    fontFamily: 'monospace',
-    textAlign: 'center',
+    fontFamily: "monospace",
+    textAlign: "center",
   },
   monthNotice: {
     fontSize: 11,
     color: colors.textMuted,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     flex: 1,
   },
   listContainer: {
     marginTop: 2,
+  },
+  statusFilterRow: {
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: colors.elevatedSurface,
+    borderColor: colors.information,
+  },
+  filterChipDueActive: {
+    backgroundColor: 'rgba(217, 74, 80, 0.15)',
+    borderColor: colors.danger,
+  },
+  filterChipSettledActive: {
+    backgroundColor: 'rgba(38, 148, 91, 0.15)',
+    borderColor: colors.brandHighlight,
+  },
+  filterChipAdvanceActive: {
+    backgroundColor: 'rgba(57, 124, 194, 0.15)',
+    borderColor: colors.information,
+  },
+  filterDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  filterChipText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  filterChipTextActive: {
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   emptyCard: {
     backgroundColor: colors.surface,
@@ -831,13 +1013,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: 32,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 10,
   },
   emptyMsg: {
     color: colors.textMuted,
     fontSize: 13,
-    textAlign: 'center',
+    textAlign: "center",
   },
   backupCard: {
     backgroundColor: colors.surface,
@@ -846,9 +1028,9 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   backupCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -856,7 +1038,7 @@ const styles = StyleSheet.create({
   },
   backupCardTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
   },
   backupCardSub: {
@@ -864,10 +1046,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    backgroundColor: 'rgba(38, 148, 91, 0.15)',
+    backgroundColor: "rgba(38, 148, 91, 0.15)",
     borderColor: colors.success,
     borderWidth: 1,
     borderRadius: 8,
@@ -877,7 +1059,7 @@ const styles = StyleSheet.create({
   statusBannerText: {
     fontSize: 11,
     color: colors.brandHighlight,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   backupButtonsGrid: {
     gap: 8,

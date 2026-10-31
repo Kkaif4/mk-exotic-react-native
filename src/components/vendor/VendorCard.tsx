@@ -7,6 +7,7 @@ import { Button } from '../common/Button';
 import { VendorFinancialSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
 import { colors } from '../../core/theme';
+import { confirmDelete } from '../../core/confirm';
 
 interface VendorCardProps {
   summary: VendorFinancialSummary;
@@ -199,7 +200,13 @@ export const VendorCard = React.memo(function VendorCard({
                       </Text>
                       {onDeleteBill ? (
                         <Pressable
-                          onPress={() => onDeleteBill(bill.id)}
+                          onPress={() =>
+                            confirmDelete(
+                              'bill',
+                              () => onDeleteBill(bill.id),
+                              bill.billNumber ? `Bill #${bill.billNumber}` : `₹${formatINR(bill.amount)}`
+                            )
+                          }
                           hitSlop={8}
                           style={styles.deleteBtn}
                         >
@@ -237,7 +244,13 @@ export const VendorCard = React.memo(function VendorCard({
                       </Text>
                       {onDeletePayment ? (
                         <Pressable
-                          onPress={() => onDeletePayment(p.id)}
+                          onPress={() =>
+                            confirmDelete(
+                              'payment',
+                              () => onDeletePayment(p.id),
+                              `${p.paymentMode} - ₹${formatINR(p.amount)}`
+                            )
+                          }
                           hitSlop={8}
                           style={styles.deleteBtn}
                         >

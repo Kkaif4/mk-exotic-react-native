@@ -64,3 +64,12 @@
 - [x] Monthly procurement vs payment breakdown displayed alongside lifetime cumulative due
 - [x] Search box overhaul: prominent modern input container, focus highlights, multi-field matching (name, bill #, phone, notes)
 - [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+## Phase 8: MK Dark Mode Palette, Deletion Warnings, Vendor Status Filters & Industrial PDF Formats
+- [x] Adopt MK Dark Mode Palette tokens (`#071629`, `#0B1D32`, `#10243A`, `#172D44`, `#243B51`, `#E6EDF2`, `#1D7548`, `#75B83D`, `#D94A50`, `#D99A32`, `#397CC2`)
+- [x] Implement cross-platform deletion confirmation dialogs (`src/core/confirm.ts`) for bills, payments, and ledger entries with contextual item descriptions
+- [x] Highlight vendor name with high-emphasis badge typography in `PaymentModal` (`Pay due balance to <Text style={styles.vendorHighlight}>{vendorName}</Text>`)
+- [x] Add interactive Vendor Due Status Filter chips (`ALL`, `DUE`, `SETTLED`, `ADVANCE`) with live entity count badges on `HomeScreen`
+- [x] Modernize PDF Statements (`src/core/pdf.ts`) matching `sample_pdf.ts` industrial A4 accounting layout (margins, company metadata, alternating zebra rows, total borders, and standard footers)
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+

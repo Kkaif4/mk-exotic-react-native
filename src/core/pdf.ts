@@ -1,11 +1,44 @@
 /**
  * Universal PDF Statement Generator for MK Exotic Fruits
- * Generates professional, clean A4 accounting statements for Customers & Vendors.
+ * Industrial A4 layout matching official specification in sample_pdf.ts.
+ * Clean, high-legibility black & white accounting format with precise typography.
  */
 
-import { Bill, VendorPayment, VendorAuditItem } from './types';
-import { formatINR } from './math';
+import { Bill, VendorAuditItem } from './types';
 
+// Palette constants matching sample_pdf.ts
+const BLACK: [number, number, number] = [0, 0, 0];
+const DARK: [number, number, number] = [30, 30, 30];
+const GREY: [number, number, number] = [110, 110, 110];
+const LIGHT: [number, number, number] = [180, 180, 180];
+const WHITE: [number, number, number] = [255, 255, 255];
+const ROW_ALT: [number, number, number] = [246, 246, 246];
+const HEADER_BG: [number, number, number] = [35, 35, 35];
+
+const fmtMonth = (m: string) => {
+  const [y, mo] = m.split('-');
+  return new Date(Number(y), Number(mo) - 1, 1).toLocaleString('default', {
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
+const fmtCurrency = (n: number) =>
+  n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const fmtDate = (d: string) => {
+  if (!d) return '-';
+  const parts = d.split('-');
+  if (parts.length === 3) {
+    const [y, m, day] = parts;
+    return `${day}-${m}-${y}`;
+  }
+  return d;
+};
+
+/**
+ * Generates an industrial A4 Customer Monthly Statement PDF matching sample_pdf.ts format
+ */
 export async function generateCustomerMonthlyPDF(
   customerName: string,
   monthStr: string,
@@ -13,291 +46,529 @@ export async function generateCustomerMonthlyPDF(
   settlementStatus: 'PAID' | 'UNPAID'
 ): Promise<void> {
   const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const PW = 210;
-  const M = 15;
+  const PH = 297;
+  const M = 20; // 20mm margin
   const CW = PW - M * 2;
 
   let y = M;
 
-  // Header Title
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEADER — company name, contact, date, rule, document title
+  // ═══════════════════════════════════════════════════════════════════════════
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.setTextColor(15, 23, 42); // Slate 900
+  doc.setTextColor(...BLACK);
   doc.text('MK EXOTIC FRUITS', M, y + 6);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139); // Slate 500
-  doc.text('Merchant & Premium Wholesale Supplier', M, y + 12);
-  doc.text('Contact: +91 7095952746, +91 9912100889', M, y + 16);
-
-  // Statement Badge / Right Column
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(16, 185, 129); // Emerald
-  doc.text('CUSTOMER STATEMENT', PW - M, y + 6, { align: 'right' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Merchant and Supplier', M, y + 11);
+  doc.text('Contact: +917095952746, +919912100889', M, y + 15);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Billing Month: ${monthStr}`, PW - M, y + 12, { align: 'right' });
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, PW - M, y + 16, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  doc.text(
+    `Date: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+    PW - M,
+    y + 3,
+    { align: 'right' }
+  );
 
-  y += 24;
+  y += 20;
 
-  // Horizontal Rule
-  doc.setDrawColor(226, 232, 240); // Slate 200
-  doc.setLineWidth(0.5);
+  // Thin rule
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.6);
   doc.line(M, y, PW - M, y);
-  y += 8;
 
-  // Customer & Status Box
-  doc.setFillColor(248, 250, 252); // Slate 50
-  doc.roundedRect(M, y, CW, 18, 3, 3, 'F');
+  y += 6;
 
+  // Document title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15, 23, 42);
-  doc.text(`Customer: ${customerName}`, M + 6, y + 8);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Total Bills Logged: ${bills.length}`, M + 6, y + 14);
-
-  // Status
-  const isPaid = settlementStatus === 'PAID';
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(isPaid ? 16 : 225, isPaid ? 185 : 29, isPaid ? 129 : 72);
-  doc.text(`STATUS: ${settlementStatus}`, PW - M - 6, y + 11, { align: 'right' });
-
-  y += 26;
-
-  // Table Headers
-  doc.setFillColor(30, 41, 59); // Slate 800
-  doc.rect(M, y, CW, 8, 'F');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('Date', M + 4, y + 5.5);
-  doc.text('Bill #', M + 35, y + 5.5);
-  doc.text('Description', M + 70, y + 5.5);
-  doc.text('Amount (INR)', PW - M - 4, y + 5.5, { align: 'right' });
+  doc.setTextColor(...DARK);
+  doc.text('CUSTOMER MONTHLY STATEMENT', M, y);
 
   y += 8;
 
-  // Table Rows
-  let totalAmount = 0;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INFO BLOCK — customer name, period, status, entries
+  // ═══════════════════════════════════════════════════════════════════════════
+
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Customer:', M, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BLACK);
+  doc.text(customerName, M + 22, y);
+
+  // Status Badge on Right
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
+  if (settlementStatus === 'PAID') {
+    doc.setTextColor(38, 148, 91); // Green
+  } else {
+    doc.setTextColor(217, 74, 80); // Red
+  }
+  doc.text(`STATUS: ${settlementStatus}`, PW - M, y, { align: 'right' });
 
-  for (let i = 0; i < bills.length; i++) {
-    const b = bills[i];
-    totalAmount += b.amount;
+  y += 6;
 
-    if (i % 2 === 1) {
-      doc.setFillColor(248, 250, 252);
-      doc.rect(M, y, CW, 7.5, 'F');
-    }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Period:', M, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...BLACK);
+  doc.text(fmtMonth(monthStr), M + 22, y);
 
-    doc.setTextColor(51, 65, 85);
-    doc.text(b.date || '-', M + 4, y + 5);
-    doc.text(b.billNumber ? `#${b.billNumber}` : '-', M + 35, y + 5);
-    doc.text('Produce Sales Delivery', M + 70, y + 5);
-    doc.text(formatINR(b.amount, false), PW - M - 4, y + 5, { align: 'right' });
+  y += 6;
 
-    y += 7.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Total Entries:', M, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...BLACK);
+  doc.text(String(bills.length), M + 22, y);
 
-    // Page overflow safety
-    if (y > 270) {
-      doc.addPage();
-      y = M;
-    }
+  y += 10;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TABLE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const COL_NO = M + 2;
+  const COL_DATE = M + 14;
+  const COL_BILL = M + 46;
+  const COL_AMT = PW - M - 3; // right-aligned
+
+  const ROW_H = 8;
+  const HDR_H = 9;
+
+  // Outer box top line
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(0.4);
+  doc.line(M, y, PW - M, y);
+
+  // Header row
+  doc.setFillColor(...HEADER_BG);
+  doc.rect(M, y, CW, HDR_H, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  doc.text('#', COL_NO, y + 6);
+  doc.text('Date', COL_DATE, y + 6);
+  doc.text('Bill Number', COL_BILL, y + 6);
+  doc.text('Amount (INR)', COL_AMT, y + 6, { align: 'right' });
+
+  y += HDR_H;
+
+  const sortedBills = [...bills].sort((a, b) => a.date.localeCompare(b.date));
+
+  let pageNum = 1;
+
+  if (sortedBills.length === 0) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(...GREY);
+    doc.text('No bills recorded for this period.', M + 4, y + 6);
+    y += 12;
+  } else {
+    sortedBills.forEach((bill, i) => {
+      // Page break check
+      if (y > PH - 45) {
+        // Bottom border before page break
+        doc.setDrawColor(...DARK);
+        doc.setLineWidth(0.4);
+        doc.line(M, y, PW - M, y);
+
+        // Footer on previous page
+        renderFooter(doc, PW, PH, M, pageNum);
+        pageNum++;
+
+        doc.addPage();
+        y = M;
+
+        // Redraw table header on new page
+        doc.setFillColor(...HEADER_BG);
+        doc.rect(M, y, CW, HDR_H, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...WHITE);
+        doc.text('#', COL_NO, y + 6);
+        doc.text('Date', COL_DATE, y + 6);
+        doc.text('Bill Number', COL_BILL, y + 6);
+        doc.text('Amount (INR)', COL_AMT, y + 6, { align: 'right' });
+        y += HDR_H;
+      }
+
+      // Alternating row background
+      if (i % 2 === 0) {
+        doc.setFillColor(...ROW_ALT);
+        doc.rect(M, y, CW, ROW_H, 'F');
+      }
+
+      // Left/right vertical borders
+      doc.setDrawColor(210, 210, 210);
+      doc.setLineWidth(0.2);
+      doc.line(M, y, M, y + ROW_H);
+      doc.line(PW - M, y, PW - M, y + ROW_H);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...DARK);
+
+      doc.text(String(i + 1), COL_NO, y + 5.5);
+      doc.text(fmtDate(bill.date), COL_DATE, y + 5.5);
+      doc.text(bill.billNumber || '-', COL_BILL, y + 5.5);
+      doc.text(fmtCurrency(bill.amount), COL_AMT, y + 5.5, { align: 'right' });
+
+      y += ROW_H;
+    });
   }
 
-  y += 6;
-  doc.setDrawColor(203, 213, 225);
-  doc.line(M, y, PW - M, y);
-  y += 6;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TOTAL ROW
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // Total Summary Box
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(PW - M - 75, y, 75, 22, 2, 2, 'F');
+  const total = sortedBills.reduce((s, b) => s + b.amount, 0);
+
+  // Top border (thick)
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.6);
+  doc.line(M, y, PW - M, y);
+
+  y += 1;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Total Monthly Due:', PW - M - 70, y + 8);
+  doc.setTextColor(...BLACK);
+  doc.text('TOTAL MONTHLY DUE', M + 4, y + 6);
+  doc.text(fmtCurrency(total), COL_AMT, y + 6, { align: 'right' });
 
-  doc.setFontSize(14);
-  doc.setTextColor(isPaid ? 16 : 225, isPaid ? 185 : 29, isPaid ? 129 : 72);
-  doc.text(formatINR(totalAmount), PW - M - 5, y + 16, { align: 'right' });
+  y += 8;
 
-  const cleanName = customerName.replace(/[^a-zA-Z0-9]/g, '_');
-  doc.save(`MK_Customer_${cleanName}_${monthStr}.pdf`);
+  // Bottom border (double line)
+  doc.setLineWidth(0.6);
+  doc.line(M, y, PW - M, y);
+  doc.setLineWidth(0.3);
+  doc.line(M, y + 1.2, PW - M, y + 1.2);
+
+  // Render footer on final page
+  renderFooter(doc, PW, PH, M, pageNum);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SAVE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const safeName = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = `MK_${safeName}_${monthStr}.pdf`;
+  doc.save(filename);
 }
 
+/**
+ * Generates an industrial A4 Vendor Lifetime Audit PDF matching sample_pdf.ts format
+ */
 export async function generateVendorLifetimeAuditPDF(
   vendorName: string,
   contactNumber: string | undefined,
-  auditTimeline: VendorAuditItem[],
   totalPurchases: number,
   totalPaid: number,
-  remainingDue: number
+  remainingDue: number,
+  auditTimeline: VendorAuditItem[]
 ): Promise<void> {
   const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const PW = 210;
-  const M = 15;
+  const PH = 297;
+  const M = 20; // 20mm margin
   const CW = PW - M * 2;
 
   let y = M;
 
-  // Header Title
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEADER
+  // ═══════════════════════════════════════════════════════════════════════════
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.setTextColor(15, 23, 42);
+  doc.setTextColor(...BLACK);
   doc.text('MK EXOTIC FRUITS', M, y + 6);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Merchant & Wholesale Produce Supplier', M, y + 12);
-  doc.text('Contact: +91 7095952746, +91 9912100889', M, y + 16);
-
-  // Statement Badge
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(79, 70, 229); // Indigo
-  doc.text('VENDOR LIFETIME AUDIT', PW - M, y + 6, { align: 'right' });
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Merchant and Supplier', M, y + 11);
+  doc.text('Contact: +917095952746, +919912100889', M, y + 15);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Type: Continuous Cumulative Ledger', PW - M, y + 12, { align: 'right' });
-  doc.text(`Audit Date: ${new Date().toLocaleDateString('en-IN')}`, PW - M, y + 16, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  doc.text(
+    `Date: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+    PW - M,
+    y + 3,
+    { align: 'right' }
+  );
 
-  y += 24;
+  y += 20;
 
-  doc.setDrawColor(226, 232, 240);
+  // Thin rule
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.6);
   doc.line(M, y, PW - M, y);
-  y += 8;
 
-  // Vendor Overview Strip
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(M, y, CW, 20, 3, 3, 'F');
+  y += 6;
 
+  // Document title
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15, 23, 42);
-  doc.text(`Vendor: ${vendorName}`, M + 6, y + 8);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Contact: ${contactNumber || 'Not specified'}`, M + 6, y + 14);
-
-  // 3-Stat Summary inside PDF
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Purchases:', PW - M - 68, y + 8);
-  doc.setTextColor(15, 23, 42);
-  doc.text(formatINR(totalPurchases), PW - M - 68, y + 14);
-
-  doc.setTextColor(100, 116, 139);
-  doc.text('Paid:', PW - M - 40, y + 8);
-  doc.setTextColor(16, 185, 129);
-  doc.text(formatINR(totalPaid), PW - M - 40, y + 14);
-
-  doc.setTextColor(100, 116, 139);
-  doc.text('Remaining Due:', PW - M - 15, y + 8, { align: 'right' });
-  doc.setTextColor(remainingDue > 0 ? 225 : 16, remainingDue > 0 ? 29 : 185, remainingDue > 0 ? 72 : 129);
-  doc.text(formatINR(remainingDue), PW - M - 6, y + 14, { align: 'right' });
-
-  y += 28;
-
-  // Table Headers
-  doc.setFillColor(30, 41, 59);
-  doc.rect(M, y, CW, 8, 'F');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text('Date', M + 4, y + 5.5);
-  doc.text('Type & Description', M + 30, y + 5.5);
-  doc.text('Purchase (+)', PW - M - 60, y + 5.5, { align: 'right' });
-  doc.text('Paid (-)', PW - M - 32, y + 5.5, { align: 'right' });
-  doc.text('Running Due', PW - M - 4, y + 5.5, { align: 'right' });
+  doc.setTextColor(...DARK);
+  doc.text('VENDOR LIFETIME AUDIT STATEMENT', M, y);
 
   y += 8;
 
-  // Render Chronological Timeline (oldest first for audit statement)
-  const chronological = [...auditTimeline].reverse();
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INFO BLOCK — vendor name, contact, 3-stat financial summary
+  // ═══════════════════════════════════════════════════════════════════════════
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Vendor:', M, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...BLACK);
+  doc.text(vendorName, M + 22, y);
 
-  for (let i = 0; i < chronological.length; i++) {
-    const item = chronological[i];
-    const isBill = item.type === 'bill';
-
-    if (i % 2 === 1) {
-      doc.setFillColor(248, 250, 252);
-      doc.rect(M, y, CW, 7, 'F');
-    }
-
-    doc.setTextColor(51, 65, 85);
-    doc.text(item.date || '-', M + 4, y + 4.8);
-    doc.text(item.description, M + 30, y + 4.8);
-
-    if (isBill) {
-      doc.setTextColor(225, 29, 72); // Rose
-      doc.text(formatINR(item.debit, false), PW - M - 60, y + 4.8, { align: 'right' });
-      doc.setTextColor(148, 163, 184);
-      doc.text('-', PW - M - 32, y + 4.8, { align: 'right' });
-    } else {
-      doc.setTextColor(148, 163, 184);
-      doc.text('-', PW - M - 60, y + 4.8, { align: 'right' });
-      doc.setTextColor(16, 185, 129); // Emerald
-      doc.text(formatINR(item.credit, false), PW - M - 32, y + 4.8, { align: 'right' });
-    }
-
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(formatINR(item.runningBalance, false), PW - M - 4, y + 4.8, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-
-    y += 7;
-
-    if (y > 270) {
-      doc.addPage();
-      y = M;
-    }
+  // Remaining Due on Right
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  if (remainingDue > 0) {
+    doc.setTextColor(217, 74, 80); // Red
+    doc.text(`REMAINING DUE: ₹${fmtCurrency(remainingDue)}`, PW - M, y, { align: 'right' });
+  } else {
+    doc.setTextColor(38, 148, 91); // Green
+    doc.text('STATUS: FULLY SETTLED', PW - M, y, { align: 'right' });
   }
 
   y += 6;
-  doc.setDrawColor(203, 213, 225);
-  doc.line(M, y, PW - M, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Contact:', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.text(contactNumber || 'Not specified', M + 22, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text(`Purchases: ₹${fmtCurrency(totalPurchases)}  |  Paid: ₹${fmtCurrency(totalPaid)}`, PW - M, y, { align: 'right' });
+
   y += 6;
 
-  // Final Closing Balance
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(PW - M - 80, y, 80, 20, 2, 2, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREY);
+  doc.text('Audit Type:', M, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BLACK);
+  doc.text('Continuous Cumulative Ledger (No Month Filter)', M + 22, y);
+
+  y += 10;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TABLE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const COL_NO = M + 2;
+  const COL_DATE = M + 12;
+  const COL_DESC = M + 36;
+  const COL_DEBIT = PW - M - 58;  // Purchase (+)
+  const COL_CREDIT = PW - M - 30; // Paid (-)
+  const COL_BAL = PW - M - 3;     // Running Due
+
+  const ROW_H = 8;
+  const HDR_H = 9;
+
+  // Outer box top line
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(0.4);
+  doc.line(M, y, PW - M, y);
+
+  // Header row
+  doc.setFillColor(...HEADER_BG);
+  doc.rect(M, y, CW, HDR_H, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Final Outstanding Due:', PW - M - 75, y + 7.5);
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  doc.text('#', COL_NO, y + 6);
+  doc.text('Date', COL_DATE, y + 6);
+  doc.text('Description / Ref', COL_DESC, y + 6);
+  doc.text('Purchase (+)', COL_DEBIT, y + 6, { align: 'right' });
+  doc.text('Paid (-)', COL_CREDIT, y + 6, { align: 'right' });
+  doc.text('Running Due', COL_BAL, y + 6, { align: 'right' });
 
-  doc.setFontSize(14);
-  doc.setTextColor(remainingDue > 0 ? 225 : 16, remainingDue > 0 ? 29 : 185, remainingDue > 0 ? 72 : 129);
-  doc.text(formatINR(remainingDue), PW - M - 5, y + 15.5, { align: 'right' });
+  y += HDR_H;
 
-  const cleanName = vendorName.replace(/[^a-zA-Z0-9]/g, '_');
-  doc.save(`MK_Vendor_Audit_${cleanName}.pdf`);
+  // Chronological order: Oldest first for continuous audit history
+  const chronological = [...auditTimeline].reverse();
+
+  let pageNum = 1;
+
+  if (chronological.length === 0) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(...GREY);
+    doc.text('No ledger transactions recorded for this vendor.', M + 4, y + 6);
+    y += 12;
+  } else {
+    chronological.forEach((item, i) => {
+      // Page break check
+      if (y > PH - 45) {
+        doc.setDrawColor(...DARK);
+        doc.setLineWidth(0.4);
+        doc.line(M, y, PW - M, y);
+
+        renderFooter(doc, PW, PH, M, pageNum);
+        pageNum++;
+
+        doc.addPage();
+        y = M;
+
+        // Redraw table header
+        doc.setFillColor(...HEADER_BG);
+        doc.rect(M, y, CW, HDR_H, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(...WHITE);
+        doc.text('#', COL_NO, y + 6);
+        doc.text('Date', COL_DATE, y + 6);
+        doc.text('Description / Ref', COL_DESC, y + 6);
+        doc.text('Purchase (+)', COL_DEBIT, y + 6, { align: 'right' });
+        doc.text('Paid (-)', COL_CREDIT, y + 6, { align: 'right' });
+        doc.text('Running Due', COL_BAL, y + 6, { align: 'right' });
+        y += HDR_H;
+      }
+
+      // Alternating row background
+      if (i % 2 === 0) {
+        doc.setFillColor(...ROW_ALT);
+        doc.rect(M, y, CW, ROW_H, 'F');
+      }
+
+      // Left/right vertical borders
+      doc.setDrawColor(210, 210, 210);
+      doc.setLineWidth(0.2);
+      doc.line(M, y, M, y + ROW_H);
+      doc.line(PW - M, y, PW - M, y + ROW_H);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...DARK);
+
+      doc.text(String(i + 1), COL_NO, y + 5.5);
+      doc.text(fmtDate(item.date), COL_DATE, y + 5.5);
+
+      const descSnippet =
+        item.description.length > 25
+          ? item.description.substring(0, 24) + '…'
+          : item.description;
+      doc.text(descSnippet, COL_DESC, y + 5.5);
+
+      if (item.debit > 0) {
+        doc.text(fmtCurrency(item.debit), COL_DEBIT, y + 5.5, { align: 'right' });
+      } else {
+        doc.text('-', COL_DEBIT, y + 5.5, { align: 'right' });
+      }
+
+      if (item.credit > 0) {
+        doc.setTextColor(38, 148, 91);
+        doc.text(fmtCurrency(item.credit), COL_CREDIT, y + 5.5, { align: 'right' });
+        doc.setTextColor(...DARK);
+      } else {
+        doc.text('-', COL_CREDIT, y + 5.5, { align: 'right' });
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.text(fmtCurrency(item.runningBalance), COL_BAL, y + 5.5, { align: 'right' });
+
+      y += ROW_H;
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TOTAL / FINAL POSITION ROW
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Top border (thick)
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.6);
+  doc.line(M, y, PW - M, y);
+
+  y += 1;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...BLACK);
+  doc.text('LIFETIME POSITION', M + 4, y + 6);
+  doc.text(fmtCurrency(totalPurchases), COL_DEBIT, y + 6, { align: 'right' });
+  doc.text(fmtCurrency(totalPaid), COL_CREDIT, y + 6, { align: 'right' });
+  doc.text(fmtCurrency(remainingDue), COL_BAL, y + 6, { align: 'right' });
+
+  y += 8;
+
+  // Bottom border (double line)
+  doc.setLineWidth(0.6);
+  doc.line(M, y, PW - M, y);
+  doc.setLineWidth(0.3);
+  doc.line(M, y + 1.2, PW - M, y + 1.2);
+
+  // Render footer
+  renderFooter(doc, PW, PH, M, pageNum);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SAVE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const safeName = vendorName.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = `MK_${safeName}_Lifetime_Audit.pdf`;
+  doc.save(filename);
+}
+
+function renderFooter(
+  doc: any,
+  PW: number,
+  PH: number,
+  M: number,
+  pageNum: number
+) {
+  const footerY = PH - 14;
+  doc.setDrawColor(...LIGHT);
+  doc.setLineWidth(0.2);
+  doc.line(M, footerY, PW - M, footerY);
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(...GREY);
+  doc.text('MK Exotic Fruits — System-generated document', M, footerY + 4);
+  doc.text(`Page ${pageNum}`, PW - M, footerY + 4, { align: 'right' });
 }

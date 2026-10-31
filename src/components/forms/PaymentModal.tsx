@@ -61,7 +61,9 @@ export const PaymentModal = React.memo(function PaymentModal({
           <View style={styles.modalHeader}>
             <View>
               <Text style={styles.title}>Record Vendor Payment</Text>
-              <Text style={styles.subtitle}>Pay due balance to {vendorName}</Text>
+              <Text style={styles.subtitle}>
+                Pay due balance to <Text style={styles.vendorHighlight}>{vendorName}</Text>
+              </Text>
             </View>
             <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtnBox}>
               <Feather name="x" size={18} color={colors.textSecondary} />
@@ -170,6 +172,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  vendorHighlight: {
+    color: colors.brandHighlight,
+    fontWeight: '800',
+    fontSize: 13,
   },
   closeBtnBox: {
     padding: 4,
