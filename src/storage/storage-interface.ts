@@ -14,6 +14,7 @@ export interface IAppStorage {
   getVendors(): Promise<Vendor[]>;
   saveVendors(vendors: Vendor[]): Promise<void>;
   addVendor(vendor: Omit<Vendor, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vendor>;
+  updateVendor(id: string, updates: Partial<Omit<Vendor, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Vendor | null>;
 
   getVendorPayments(): Promise<VendorPayment[]>;
   saveVendorPayments(payments: VendorPayment[]): Promise<void>;

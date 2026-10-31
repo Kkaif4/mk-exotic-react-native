@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Card } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
-import { CustomerMonthSummary, Bill } from '../../core/types';
+import { CustomerMonthSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
+import { generateCustomerMonthlyPDF } from '../../core/pdf';
 
 interface CustomerLedgerCardProps {
   summary: CustomerMonthSummary;
@@ -19,12 +21,25 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
 }: CustomerLedgerCardProps) {
   const isPaid = summary.status === 'PAID';
 
+  const handleDownloadPDF = async () => {
+    try {
+      await generateCustomerMonthlyPDF(
+        summary.customerName,
+        summary.monthStr,
+        summary.bills,
+        summary.status
+      );
+    } catch (err) {
+      console.error('Failed to generate customer PDF:', err);
+    }
+  };
+
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
         <View>
           <Text style={styles.name}>{summary.customerName}</Text>
-          <Text style={styles.monthLabel}>Month: {summary.monthStr}</Text>
+          <Text style={styles.monthLabel}>Billing Month: {summary.monthStr}</Text>
         </View>
         <Badge
           label={isPaid ? 'PAID' : 'UNPAID'}
@@ -39,7 +54,7 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
         ) : (
           summary.bills.map((bill) => (
             <View key={bill.id} style={styles.billRow}>
-              <View>
+              <View style={styles.billMeta}>
                 <Text style={styles.billDate}>{bill.date}</Text>
                 {bill.billNumber ? (
                   <Text style={styles.billNumber}>#{bill.billNumber}</Text>
@@ -47,8 +62,12 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
               </View>
               <View style={styles.billRight}>
                 <Text style={styles.billAmount}>{formatINR(bill.amount)}</Text>
-                <Pressable onPress={() => onDeleteBill(bill.id)} hitSlop={8}>
-                  <Text style={styles.deleteCross}>✕</Text>
+                <Pressable
+                  onPress={() => onDeleteBill(bill.id)}
+                  hitSlop={8}
+                  style={styles.deleteButton}
+                >
+                  <Feather name="trash-2" size={13} color="#f43f5e" />
                 </Pressable>
               </View>
             </View>
@@ -56,19 +75,37 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
         )}
       </View>
 
-      {/* Footer Dues & Settlement Button */}
+      {/* Footer Dues & Settlement / PDF Actions */}
       <View style={styles.footer}>
         <View>
           <Text style={styles.dueLabel}>Total Monthly Due</Text>
-          <Text style={styles.dueAmount}>{formatINR(summary.totalDue)}</Text>
+          <Text style={[styles.dueAmount, isPaid && styles.settledDueAmount]}>
+            {formatINR(summary.totalDue)}
+          </Text>
         </View>
 
-        <Button
-          title={isPaid ? 'Mark UNPAID' : 'MARK AS PAID'}
-          variant={isPaid ? 'secondary' : 'success'}
-          onPress={() => onToggleSettlement(summary.customerName, summary.monthStr)}
-          style={styles.settleBtn}
-        />
+        <View style={styles.actionsRow}>
+          <Button
+            title="PDF"
+            variant="secondary"
+            icon={<Feather name="file-text" size={13} color="#e2e8f0" />}
+            onPress={handleDownloadPDF}
+            style={styles.pdfBtn}
+          />
+          <Button
+            title={isPaid ? 'Mark Unpaid' : 'Mark as Paid'}
+            variant={isPaid ? 'secondary' : 'success'}
+            icon={
+              isPaid ? (
+                <Feather name="rotate-ccw" size={13} color="#e2e8f0" />
+              ) : (
+                <Feather name="check" size={13} color="#ffffff" />
+              )
+            }
+            onPress={() => onToggleSettlement(summary.customerName, summary.monthStr)}
+            style={styles.settleBtn}
+          />
+        </View>
       </View>
     </Card>
   );
@@ -76,7 +113,11 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
+    marginBottom: 14,
+    backgroundColor: '#0b1329',
+    borderColor: '#1e293b',
+    borderWidth: 1,
+    borderRadius: 14,
   },
   header: {
     flexDirection: 'row',
@@ -89,7 +130,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#ffffff',
   },
   monthLabel: {
@@ -98,37 +139,48 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   billsList: {
+    gap: 6,
     marginBottom: 12,
   },
   emptyText: {
     color: '#64748b',
-    fontSize: 13,
+    fontSize: 12,
     fontStyle: 'italic',
-    paddingVertical: 12,
-    textAlign: 'center',
+    paddingVertical: 6,
   },
   billRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#020617',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#0f172a',
+  },
+  billMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   billDate: {
     fontSize: 12,
     color: '#94a3b8',
-    fontFamily: 'monospace',
   },
   billNumber: {
     fontSize: 11,
     color: '#64748b',
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    fontFamily: 'monospace',
   },
   billRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   billAmount: {
     fontSize: 13,
@@ -136,10 +188,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontFamily: 'monospace',
   },
-  deleteCross: {
-    color: '#64748b',
-    fontSize: 14,
-    paddingHorizontal: 4,
+  deleteButton: {
+    padding: 3,
   },
   footer: {
     flexDirection: 'row',
@@ -147,21 +197,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#1e293b',
-    paddingTop: 12,
+    paddingTop: 10,
   },
   dueLabel: {
     fontSize: 11,
     color: '#94a3b8',
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
   dueAmount: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#fb7185',
     fontFamily: 'monospace',
     marginTop: 2,
   },
+  settledDueAmount: {
+    color: '#34d399',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  pdfBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   settleBtn: {
-    minWidth: 130,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
 });

@@ -146,6 +146,23 @@ export class NativeAppStorage implements IAppStorage {
     return newVendor;
   }
 
+  async updateVendor(
+    id: string,
+    updates: Partial<Omit<Vendor, 'id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<Vendor | null> {
+    const vendors = await this.getVendors();
+    const idx = vendors.findIndex((v) => v.id === id);
+    if (idx < 0) return null;
+    const updated: Vendor = {
+      ...vendors[idx],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    vendors[idx] = updated;
+    await this.saveVendors(vendors);
+    return updated;
+  }
+
   async getVendorPayments(): Promise<VendorPayment[]> {
     const raw = await getItem(KEYS.PAYMENTS);
     return raw ? JSON.parse(raw) : [];

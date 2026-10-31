@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Card } from '../common/Card';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
@@ -76,11 +77,14 @@ export const BillForm = React.memo(function BillForm({
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>Log New Bill</Text>
-        <Text style={styles.subtext}>3-Field Fast Entry</Text>
+        <View style={styles.titleRow}>
+          <Feather name="edit-3" size={17} color="#818cf8" style={styles.headerIcon} />
+          <Text style={styles.title}>Record New Bill</Text>
+        </View>
+        <Text style={styles.badgeLabel}>Quick Entry</Text>
       </View>
 
-      {/* Bill Type Selector */}
+      {/* Bill Type Selector with Clean Icons */}
       <View style={styles.typeSelector}>
         <Pressable
           onPress={() => {
@@ -89,10 +93,17 @@ export const BillForm = React.memo(function BillForm({
           }}
           style={[styles.typeButton, type === 'sale' && styles.saleActive]}
         >
+          <Feather
+            name="shopping-bag"
+            size={14}
+            color={type === 'sale' ? '#ffffff' : '#94a3b8'}
+            style={styles.btnIcon}
+          />
           <Text style={[styles.typeText, type === 'sale' && styles.typeTextActive]}>
-            🛒 Customer Sale
+            Customer Sale
           </Text>
         </Pressable>
+
         <Pressable
           onPress={() => {
             setType('purchase');
@@ -100,8 +111,14 @@ export const BillForm = React.memo(function BillForm({
           }}
           style={[styles.typeButton, type === 'purchase' && styles.purchaseActive]}
         >
+          <Feather
+            name="truck"
+            size={14}
+            color={type === 'purchase' ? '#ffffff' : '#94a3b8'}
+            style={styles.btnIcon}
+          />
           <Text style={[styles.typeText, type === 'purchase' && styles.typeTextActive]}>
-            📦 Vendor Purchase
+            Vendor Purchase
           </Text>
         </Pressable>
       </View>
@@ -109,8 +126,8 @@ export const BillForm = React.memo(function BillForm({
       {/* Name Input with Autocomplete */}
       <View style={styles.inputContainer}>
         <Input
-          label={type === 'sale' ? 'Customer Name' : 'Vendor Name'}
-          placeholder={type === 'sale' ? 'e.g. John Doe, Fresh Mart' : 'e.g. Exotic Imports Co.'}
+          label={type === 'sale' ? 'Customer Name *' : 'Vendor Name *'}
+          placeholder={type === 'sale' ? 'e.g. Fresh Mart, John Doe' : 'e.g. Exotic Imports Co.'}
           value={entityName}
           onChangeText={(txt) => {
             setEntityName(txt);
@@ -136,22 +153,27 @@ export const BillForm = React.memo(function BillForm({
         )}
       </View>
 
-      <Input
-        label="Bill Number (Optional)"
-        placeholder="e.g. 1042"
-        value={billNumber}
-        onChangeText={setBillNumber}
-      />
+      <View style={styles.rowInputs}>
+        <View style={styles.flex1}>
+          <Input
+            label="Bill # (Optional)"
+            placeholder="e.g. 1042"
+            value={billNumber}
+            onChangeText={setBillNumber}
+          />
+        </View>
+        <View style={styles.flex1}>
+          <Input
+            label="Date"
+            placeholder="YYYY-MM-DD"
+            value={date}
+            onChangeText={setDate}
+          />
+        </View>
+      </View>
 
       <Input
-        label="Date"
-        placeholder="YYYY-MM-DD"
-        value={date}
-        onChangeText={setDate}
-      />
-
-      <Input
-        label="Bill Amount (₹)"
+        label="Total Amount (INR) *"
         placeholder="e.g. 20000"
         keyboardType="numeric"
         value={amount}
@@ -160,9 +182,10 @@ export const BillForm = React.memo(function BillForm({
       />
 
       <Button
-        title={`Save ${type === 'sale' ? 'Customer Bill' : 'Vendor Purchase'}`}
+        title={`Save ${type === 'sale' ? 'Sale Bill' : 'Purchase Bill'}`}
         variant={type === 'sale' ? 'success' : 'primary'}
         onPress={handleSubmit}
+        icon={<Feather name="check" size={15} color="#ffffff" />}
         style={styles.submitBtn}
       />
     </Card>
@@ -179,28 +202,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  subtext: {
-    fontSize: 12,
-    color: '#94a3b8',
+  headerIcon: {
+    marginRight: 8,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.2,
+  },
+  badgeLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    backgroundColor: '#020617',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    fontWeight: '600',
   },
   typeSelector: {
     flexDirection: 'row',
     backgroundColor: '#020617',
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 10,
+    padding: 3,
     marginBottom: 14,
-    gap: 6,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#1e293b',
   },
   typeButton: {
     flex: 1,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    paddingVertical: 9,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
+  },
+  btnIcon: {
+    marginRight: 6,
   },
   saleActive: {
     backgroundColor: '#059669',
@@ -210,7 +255,7 @@ const styles = StyleSheet.create({
   },
   typeText: {
     color: '#94a3b8',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   typeTextActive: {
@@ -220,6 +265,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     position: 'relative',
     zIndex: 10,
+  },
+  rowInputs: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  flex1: {
+    flex: 1,
   },
   dropdown: {
     position: 'absolute',
@@ -232,9 +284,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
   },
   dropdownItem: {
     paddingVertical: 10,
@@ -247,6 +299,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   submitBtn: {
-    marginTop: 6,
+    marginTop: 4,
   },
 });

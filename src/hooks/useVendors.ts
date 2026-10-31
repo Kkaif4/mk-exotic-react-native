@@ -36,6 +36,18 @@ export function useVendors() {
     [refreshVendors]
   );
 
+  const updateVendor = useCallback(
+    async (
+      id: string,
+      updates: Partial<Omit<Vendor, 'id' | 'createdAt' | 'updatedAt'>>
+    ) => {
+      const updated = await defaultStorage.updateVendor(id, updates);
+      await refreshVendors();
+      return updated;
+    },
+    [refreshVendors]
+  );
+
   const addPayment = useCallback(
     async (paymentData: {
       vendorId: string;
@@ -73,6 +85,7 @@ export function useVendors() {
     loading,
     refreshVendors,
     addVendor,
+    updateVendor,
     addPayment,
     deletePayment,
   };

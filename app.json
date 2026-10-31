@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "MK Exotic Fruits",
+    "slug": "mk-exotix-native",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#020617"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.mkexoticfruits.nativeapp"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

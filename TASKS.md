@@ -41,3 +41,18 @@
 - [x] Run full automated test suite (`npm test`): 5 test suites, 23 tests passing with 100% green
 - [x] Verify status precedence: `DUE` -> `ADVANCE` -> `SETTLED` -> `NO_BILLS`
 - [x] Verify mathematical precision without float drift
+
+## Phase 6: Modern Desktop Responsive UI, PDF Statements & Backup Hub
+- [x] Responsive layout with dynamic two-column desktop/laptop view (`HomeScreen`, `VendorDetailScreen`)
+- [x] Complete removal of all emojis; upgraded to `@expo/vector-icons` (`Feather`)
+- [x] Modern obsidian dark theme styling (`#020617`, `#0b1329`, `#1e293b`) with high readability
+- [x] Vendor Profile Card on Vendor Lifetime Due screen (contact phone, notes, registration date, edit info modal)
+- [x] PDF Statement Generation:
+  - [x] Customer monthly accounting statement (`generateCustomerMonthlyPDF`)
+  - [x] Vendor continuous lifetime audit statement (`generateVendorLifetimeAuditPDF`)
+- [x] Data Hub & Backup Management:
+  - [x] Export full database JSON backup (`exportFullJSONBackup`)
+  - [x] Import and LWW merge JSON backup with web file input (`importJSONBackup`)
+  - [x] Export itemized CSV reports for sales and purchases (`exportCSVReports`)
+- [x] Automated test suite expanded to 6 test suites and 26 tests (`backup-and-export.test.ts`)
+- [x] Web build verification (`expo export -p web`) passed cleanly

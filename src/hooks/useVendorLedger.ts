@@ -8,7 +8,15 @@ import {
 
 export function useVendorLedger(vendorId: string, vendorName: string) {
   const { bills, deleteBill } = useBills();
-  const { payments, addPayment, deletePayment, refreshVendors } = useVendors();
+  const { vendors, payments, addPayment, updateVendor, deletePayment, refreshVendors } = useVendors();
+
+  const vendor = useMemo(() => {
+    return (
+      vendors.find((v) => v.id === vendorId) ||
+      vendors.find((v) => v.name.trim().toLowerCase() === vendorName.trim().toLowerCase()) ||
+      null
+    );
+  }, [vendors, vendorId, vendorName]);
 
   const financialSummary = useMemo(() => {
     return calculateVendorFinancials(vendorId, vendorName, bills, payments);
@@ -32,10 +40,22 @@ export function useVendorLedger(vendorId: string, vendorName: string) {
     [vendorId, addPayment, refreshVendors]
   );
 
+  const updateVendorDetails = useCallback(
+    async (updates: { contactNumber?: string; notes?: string }) => {
+      if (vendor?.id) {
+        await updateVendor(vendor.id, updates);
+        await refreshVendors();
+      }
+    },
+    [vendor, updateVendor, refreshVendors]
+  );
+
   return {
+    vendor,
     financialSummary,
     auditTimeline,
     recordPayment,
+    updateVendorDetails,
     deletePayment,
     deleteBill,
   };
