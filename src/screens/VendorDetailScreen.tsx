@@ -17,6 +17,7 @@ import { VendorLedgerTimeline } from '../components/vendor/VendorLedgerTimeline'
 import { PaymentModal } from '../components/forms/PaymentModal';
 import { formatINR } from '../core/math';
 import { generateVendorLifetimeAuditPDF } from '../core/pdf';
+import { colors } from '../core/theme';
 
 interface VendorDetailScreenProps {
   vendorId: string;
@@ -80,7 +81,7 @@ export function VendorDetailScreen({
       <Card style={styles.profileCard}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.badgeLabelRow}>
-            <Feather name="truck" size={16} color="#818cf8" />
+            <Feather name="truck" size={16} color={colors.information} />
             <Text style={styles.cardHeaderTitle}>Vendor Profile</Text>
           </View>
           <Pressable
@@ -95,7 +96,7 @@ export function VendorDetailScreen({
             <Feather
               name={isEditingVendor ? 'x' : 'edit-2'}
               size={14}
-              color="#94a3b8"
+              color={colors.textSecondary}
             />
             <Text style={styles.editText}>
               {isEditingVendor ? 'Cancel' : 'Edit Info'}
@@ -109,7 +110,7 @@ export function VendorDetailScreen({
             <TextInput
               style={styles.textInput}
               placeholder="+91 9876543210"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={colors.textMuted}
               value={contactInput}
               onChangeText={setContactInput}
             />
@@ -118,7 +119,7 @@ export function VendorDetailScreen({
             <TextInput
               style={[styles.textInput, styles.textArea]}
               placeholder="e.g. GSTIN, wholesale terms, fruit varieties..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor={colors.textMuted}
               value={notesInput}
               onChangeText={setNotesInput}
               multiline
@@ -128,7 +129,7 @@ export function VendorDetailScreen({
             <Button
               title="Save Vendor Info"
               variant="primary"
-              icon={<Feather name="check" size={14} color="#ffffff" />}
+              icon={<Feather name="check" size={14} color={colors.textPrimary} />}
               onPress={handleSaveVendorInfo}
               style={styles.saveInfoBtn}
             />
@@ -222,14 +223,14 @@ export function VendorDetailScreen({
           <Button
             title={isDownloadingPDF ? 'Exporting PDF...' : 'Download Statement (PDF)'}
             variant="secondary"
-            icon={<Feather name="file-text" size={14} color="#e2e8f0" />}
+            icon={<Feather name="file-text" size={14} color={colors.textPrimary} />}
             onPress={handleDownloadPDF}
             style={styles.pdfBtn}
           />
           <Button
             title="Record Payment"
             variant="primary"
-            icon={<Feather name="credit-card" size={14} color="#ffffff" />}
+            icon={<Feather name="credit-card" size={14} color={colors.textPrimary} />}
             onPress={() => setPaymentModalOpen(true)}
             style={styles.payBtn}
           />
@@ -244,7 +245,7 @@ export function VendorDetailScreen({
         {/* Header with Back Button */}
         <View style={styles.header}>
           <Pressable onPress={onBack} hitSlop={12} style={styles.backButton}>
-            <Feather name="arrow-left" size={18} color="#e2e8f0" />
+            <Feather name="arrow-left" size={18} color={colors.textPrimary} />
             <Text style={styles.backText}>All Ledgers</Text>
           </Pressable>
           <View style={styles.titleCol}>
@@ -261,7 +262,7 @@ export function VendorDetailScreen({
             <View style={styles.desktopLeft}>{leftColumnContent}</View>
             <View style={styles.desktopRight}>
               <View style={styles.timelineHeader}>
-                <Feather name="clock" size={15} color="#818cf8" />
+                <Feather name="clock" size={15} color={colors.information} />
                 <Text style={styles.timelineTitle}>
                   Chronological Audit Timeline ({auditTimeline.length})
                 </Text>
@@ -277,7 +278,7 @@ export function VendorDetailScreen({
           <View style={styles.mobileLayout}>
             {leftColumnContent}
             <View style={styles.timelineHeader}>
-              <Feather name="clock" size={15} color="#818cf8" />
+              <Feather name="clock" size={15} color={colors.information} />
               <Text style={styles.timelineTitle}>
                 Chronological Audit Timeline ({auditTimeline.length})
               </Text>
@@ -310,7 +311,7 @@ export function VendorDetailScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
   },
   container: {
     flex: 1,
@@ -325,23 +326,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
     paddingBottom: 12,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   backText: {
     fontSize: 13,
-    color: '#e2e8f0',
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   titleCol: {
@@ -350,12 +351,12 @@ const styles = StyleSheet.create({
   vendorName: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#ffffff',
+    color: colors.textPrimary,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   desktopLayout: {
@@ -377,8 +378,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   profileCard: {
-    backgroundColor: '#0b1329',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
   },
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
     paddingBottom: 8,
   },
   badgeLabelRow: {
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
   cardHeaderTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   editBtn: {
     flexDirection: 'row',
@@ -409,7 +410,7 @@ const styles = StyleSheet.create({
   },
   editText: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   editForm: {
@@ -417,16 +418,16 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
     marginTop: 4,
   },
   textInput: {
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     borderRadius: 8,
-    color: '#ffffff',
+    color: colors.textPrimary,
     paddingHorizontal: 10,
     paddingVertical: 7,
     fontSize: 13,
@@ -449,22 +450,22 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   detailValue: {
     fontSize: 12,
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontWeight: '600',
   },
   detailValueSub: {
     fontSize: 12,
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontFamily: 'monospace',
   },
   overviewCard: {
-    backgroundColor: '#0b1329',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
   },
@@ -476,13 +477,13 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderRadius: 10,
     padding: 12,
     gap: 8,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#0f172a',
+    borderColor: colors.border,
   },
   statItem: {
     flex: 1,
@@ -490,32 +491,32 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   statValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
     marginTop: 3,
     fontFamily: 'monospace',
   },
   statValueGreen: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#34d399',
+    color: colors.brandHighlight,
     marginTop: 3,
     fontFamily: 'monospace',
   },
   statValueDue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#fb7185',
+    color: colors.danger,
     marginTop: 3,
     fontFamily: 'monospace',
   },
   statValueSettled: {
-    color: '#34d399',
+    color: colors.brandHighlight,
   },
   buttonActionRow: {
     flexDirection: 'row',
@@ -539,6 +540,6 @@ const styles = StyleSheet.create({
   timelineTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
 });

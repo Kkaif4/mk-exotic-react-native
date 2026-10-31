@@ -6,6 +6,7 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { BillType, Vendor } from '../../core/types';
 import { isValidMoneyAmount } from '../../core/math';
+import { colors } from '../../core/theme';
 
 interface BillFormProps {
   existingNames: { customers: string[]; vendors: string[] };
@@ -78,7 +79,7 @@ export const BillForm = React.memo(function BillForm({
     <Card style={styles.card}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Feather name="edit-3" size={17} color="#818cf8" style={styles.headerIcon} />
+          <Feather name="edit-3" size={17} color={colors.information} style={styles.headerIcon} />
           <Text style={styles.title}>Record New Bill</Text>
         </View>
         <Text style={styles.badgeLabel}>Quick Entry</Text>
@@ -96,7 +97,7 @@ export const BillForm = React.memo(function BillForm({
           <Feather
             name="shopping-bag"
             size={14}
-            color={type === 'sale' ? '#ffffff' : '#94a3b8'}
+            color={type === 'sale' ? colors.textPrimary : colors.textSecondary}
             style={styles.btnIcon}
           />
           <Text style={[styles.typeText, type === 'sale' && styles.typeTextActive]}>
@@ -114,7 +115,7 @@ export const BillForm = React.memo(function BillForm({
           <Feather
             name="truck"
             size={14}
-            color={type === 'purchase' ? '#ffffff' : '#94a3b8'}
+            color={type === 'purchase' ? colors.textPrimary : colors.textSecondary}
             style={styles.btnIcon}
           />
           <Text style={[styles.typeText, type === 'purchase' && styles.typeTextActive]}>
@@ -185,7 +186,7 @@ export const BillForm = React.memo(function BillForm({
         title={`Save ${type === 'sale' ? 'Sale Bill' : 'Purchase Bill'}`}
         variant={type === 'sale' ? 'success' : 'primary'}
         onPress={handleSubmit}
-        icon={<Feather name="check" size={15} color="#ffffff" />}
+        icon={<Feather name="check" size={15} color={colors.textPrimary} />}
         style={styles.submitBtn}
       />
     </Card>
@@ -212,29 +213,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#ffffff',
+    color: colors.textPrimary,
     letterSpacing: 0.2,
   },
   badgeLabel: {
     fontSize: 11,
-    color: '#64748b',
-    backgroundColor: '#020617',
+    color: colors.textMuted,
+    backgroundColor: colors.appBackground,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     fontWeight: '600',
   },
   typeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderRadius: 10,
     padding: 3,
     marginBottom: 14,
     gap: 4,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   typeButton: {
     flex: 1,
@@ -248,18 +249,18 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   saleActive: {
-    backgroundColor: '#059669',
+    backgroundColor: colors.success, // #26945B
   },
   purchaseActive: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: colors.brandSecondary, // #1455A0
   },
   typeText: {
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '600',
   },
   typeTextActive: {
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   inputContainer: {
@@ -278,9 +279,9 @@ const styles = StyleSheet.create({
     top: 64,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.elevatedSurface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     borderRadius: 8,
     zIndex: 20,
     shadowColor: '#000',
@@ -292,10 +293,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
   },
   dropdownText: {
-    color: '#e2e8f0',
+    color: colors.textPrimary,
     fontSize: 13,
   },
   submitBtn: {

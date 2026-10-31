@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../../core/theme';
 
 interface BadgeProps {
   label: string;
@@ -35,20 +36,20 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   due: {
-    backgroundColor: 'rgba(244, 63, 94, 0.1)',
-    borderColor: 'rgba(244, 63, 94, 0.35)',
+    backgroundColor: 'rgba(217, 74, 80, 0.14)',
+    borderColor: 'rgba(217, 74, 80, 0.4)',
   },
   settled: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderColor: 'rgba(16, 185, 129, 0.35)',
+    backgroundColor: 'rgba(38, 148, 91, 0.14)',
+    borderColor: 'rgba(38, 148, 91, 0.4)',
   },
   advance: {
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    borderColor: 'rgba(99, 102, 241, 0.35)',
+    backgroundColor: 'rgba(57, 124, 194, 0.14)',
+    borderColor: 'rgba(57, 124, 194, 0.4)',
   },
   neutral: {
-    backgroundColor: '#1e293b',
-    borderColor: '#334155',
+    backgroundColor: colors.elevatedSurface,
+    borderColor: colors.border,
   },
   text: {
     fontSize: 11,
@@ -58,15 +59,15 @@ const styles = StyleSheet.create({
 });
 
 const dotStyles = StyleSheet.create({
-  due: { backgroundColor: '#f43f5e' },
-  settled: { backgroundColor: '#10b981' },
-  advance: { backgroundColor: '#6366f1' },
-  neutral: { backgroundColor: '#94a3b8' },
+  due: { backgroundColor: colors.danger },
+  settled: { backgroundColor: colors.success },
+  advance: { backgroundColor: colors.information },
+  neutral: { backgroundColor: colors.textSecondary },
 });
 
 const textStyles = StyleSheet.create({
-  due: { color: '#fb7185' },
-  settled: { color: '#34d399' },
-  advance: { color: '#818cf8' },
-  neutral: { color: '#94a3b8' },
+  due: { color: colors.danger },
+  settled: { color: colors.brandHighlight },
+  advance: { color: colors.information },
+  neutral: { color: colors.textSecondary },
 });

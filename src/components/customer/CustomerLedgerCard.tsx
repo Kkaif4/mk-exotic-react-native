@@ -7,6 +7,7 @@ import { Button } from '../common/Button';
 import { CustomerMonthSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
 import { generateCustomerMonthlyPDF } from '../../core/pdf';
+import { colors } from '../../core/theme';
 
 interface CustomerLedgerCardProps {
   summary: CustomerMonthSummary;
@@ -67,7 +68,7 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
                   hitSlop={8}
                   style={styles.deleteButton}
                 >
-                  <Feather name="trash-2" size={13} color="#f43f5e" />
+                  <Feather name="trash-2" size={13} color={colors.danger} />
                 </Pressable>
               </View>
             </View>
@@ -88,7 +89,7 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
           <Button
             title="PDF"
             variant="secondary"
-            icon={<Feather name="file-text" size={13} color="#e2e8f0" />}
+            icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
             onPress={handleDownloadPDF}
             style={styles.pdfBtn}
           />
@@ -97,9 +98,9 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
             variant={isPaid ? 'secondary' : 'success'}
             icon={
               isPaid ? (
-                <Feather name="rotate-ccw" size={13} color="#e2e8f0" />
+                <Feather name="rotate-ccw" size={13} color={colors.textSecondary} />
               ) : (
-                <Feather name="check" size={13} color="#ffffff" />
+                <Feather name="check" size={13} color={colors.textPrimary} />
               )
             }
             onPress={() => onToggleSettlement(summary.customerName, summary.monthStr)}
@@ -114,8 +115,8 @@ export const CustomerLedgerCard = React.memo(function CustomerLedgerCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 14,
-    backgroundColor: '#0b1329',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 14,
   },
@@ -124,18 +125,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
     paddingBottom: 10,
     marginBottom: 10,
   },
   name: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   monthLabel: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   billsList: {
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyText: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 12,
     fontStyle: 'italic',
     paddingVertical: 6,
@@ -152,12 +153,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#0f172a',
+    borderColor: colors.border,
   },
   billMeta: {
     flexDirection: 'row',
@@ -166,16 +167,18 @@ const styles = StyleSheet.create({
   },
   billDate: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
   },
   billNumber: {
     fontSize: 11,
-    color: '#64748b',
-    backgroundColor: '#1e293b',
+    color: colors.textSecondary,
+    backgroundColor: colors.elevatedSurface,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
     fontFamily: 'monospace',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   billRight: {
     flexDirection: 'row',
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
   billAmount: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontFamily: 'monospace',
   },
   deleteButton: {
@@ -196,24 +199,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: colors.border,
     paddingTop: 10,
   },
   dueLabel: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '600',
   },
   dueAmount: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#fb7185',
+    color: colors.danger,
     fontFamily: 'monospace',
     marginTop: 2,
   },
   settledDueAmount: {
-    color: '#34d399',
+    color: colors.brandHighlight,
   },
   actionsRow: {
     flexDirection: 'row',

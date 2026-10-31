@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
+import { colors } from '../../core/theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -12,10 +13,10 @@ export const Card = React.memo(function Card({ children, style }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#0f172a', // Slate 900
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b', // Slate 800
+    borderColor: colors.border,
     padding: 16,
   },
 });

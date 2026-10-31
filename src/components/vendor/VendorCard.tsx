@@ -6,6 +6,7 @@ import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { VendorFinancialSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
+import { colors } from '../../core/theme';
 
 interface VendorCardProps {
   summary: VendorFinancialSummary;
@@ -58,7 +59,7 @@ export const VendorCard = React.memo(function VendorCard({
           <Text style={styles.name}>{summary.vendorName}</Text>
           {contactNumber ? (
             <View style={styles.metaRow}>
-              <Feather name="phone" size={11} color="#94a3b8" />
+              <Feather name="phone" size={11} color={colors.textSecondary} />
               <Text style={styles.metaText}>{contactNumber}</Text>
             </View>
           ) : null}
@@ -125,7 +126,7 @@ export const VendorCard = React.memo(function VendorCard({
             <Feather
               name="file-text"
               size={11}
-              color={activeSubTab === 'bills' ? '#38bdf8' : '#94a3b8'}
+              color={activeSubTab === 'bills' ? colors.textPrimary : colors.textSecondary}
             />
             <Text
               style={[
@@ -147,7 +148,7 @@ export const VendorCard = React.memo(function VendorCard({
             <Feather
               name="credit-card"
               size={11}
-              color={activeSubTab === 'payments' ? '#34d399' : '#94a3b8'}
+              color={activeSubTab === 'payments' ? colors.brandHighlight : colors.textSecondary}
             />
             <Text
               style={[
@@ -168,7 +169,7 @@ export const VendorCard = React.memo(function VendorCard({
           <Feather
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={14}
-            color="#94a3b8"
+            color={colors.textSecondary}
           />
           <Text style={styles.expandText}>{expanded ? 'Hide' : 'Show'}</Text>
         </Pressable>
@@ -202,7 +203,7 @@ export const VendorCard = React.memo(function VendorCard({
                           hitSlop={8}
                           style={styles.deleteBtn}
                         >
-                          <Feather name="trash-2" size={12} color="#f43f5e" />
+                          <Feather name="trash-2" size={12} color={colors.danger} />
                         </Pressable>
                       ) : null}
                     </View>
@@ -240,7 +241,7 @@ export const VendorCard = React.memo(function VendorCard({
                           hitSlop={8}
                           style={styles.deleteBtn}
                         >
-                          <Feather name="trash-2" size={12} color="#f43f5e" />
+                          <Feather name="trash-2" size={12} color={colors.danger} />
                         </Pressable>
                       ) : null}
                     </View>
@@ -257,7 +258,7 @@ export const VendorCard = React.memo(function VendorCard({
         <Button
           title="Audit Ledger"
           variant="secondary"
-          icon={<Feather name="clock" size={13} color="#e2e8f0" />}
+          icon={<Feather name="clock" size={13} color={colors.textPrimary} />}
           onPress={() => onSelectVendor(summary.vendorId, summary.vendorName)}
           style={styles.actionBtn}
         />
@@ -265,7 +266,7 @@ export const VendorCard = React.memo(function VendorCard({
           <Button
             title="PDF"
             variant="secondary"
-            icon={<Feather name="file-text" size={13} color="#e2e8f0" />}
+            icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
             onPress={() => onDownloadPDF(summary.vendorId, summary.vendorName)}
             style={styles.actionBtnSmall}
           />
@@ -273,7 +274,7 @@ export const VendorCard = React.memo(function VendorCard({
         <Button
           title="Add Payment"
           variant="primary"
-          icon={<Feather name="credit-card" size={13} color="#ffffff" />}
+          icon={<Feather name="credit-card" size={13} color={colors.textPrimary} />}
           onPress={() =>
             onOpenPaymentModal(
               summary.vendorId,
@@ -291,8 +292,8 @@ export const VendorCard = React.memo(function VendorCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 14,
-    backgroundColor: '#0b1329',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 14,
   },
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   metaRow: {
     flexDirection: 'row',
@@ -319,23 +320,23 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   notesText: {
     fontSize: 11,
-    color: '#64748b',
+    color: colors.textMuted,
     marginTop: 2,
     fontStyle: 'italic',
   },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderRadius: 10,
     padding: 10,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#0f172a',
+    borderColor: colors.border,
   },
   statBox: {
     flex: 1,
@@ -343,38 +344,38 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
   },
   statValWhite: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
     marginTop: 2,
     fontFamily: 'monospace',
   },
   statValGreen: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#34d399',
+    color: colors.brandHighlight,
     marginTop: 2,
     fontFamily: 'monospace',
   },
   statValDue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#fb7185',
+    color: colors.danger,
     marginTop: 2,
     fontFamily: 'monospace',
   },
   statValSettled: {
-    color: '#34d399',
+    color: colors.brandHighlight,
   },
   monthBreakdownBar: {
     flexDirection: 'row',
-    backgroundColor: '#070e20',
+    backgroundColor: colors.elevatedSurface,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -391,22 +392,22 @@ const styles = StyleSheet.create({
   monthDivider: {
     width: 1,
     height: 14,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.border,
   },
   monthLabel: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   monthValueWhite: {
     fontSize: 11,
-    color: '#e2e8f0',
+    color: colors.textPrimary,
     fontWeight: '700',
     fontFamily: 'monospace',
   },
   monthValueGreen: {
     fontSize: 11,
-    color: '#34d399',
+    color: colors.brandHighlight,
     fontWeight: '700',
     fontFamily: 'monospace',
   },
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#162036',
+    borderTopColor: colors.border,
   },
   subTabGroup: {
     flexDirection: 'row',
@@ -430,21 +431,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   subTabBtnActive: {
-    borderColor: '#38bdf8',
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderColor: colors.information,
+    backgroundColor: 'rgba(57, 124, 194, 0.15)',
   },
   subTabText: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   subTabTextActive: {
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   expandToggle: {
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
   },
   expandText: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
   },
   recordsContainer: {
     marginTop: 8,
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   emptyRecordsText: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 11,
     fontStyle: 'italic',
     paddingVertical: 6,
@@ -474,12 +475,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#0f172a',
+    borderColor: colors.border,
   },
   recordLeft: {
     flexDirection: 'row',
@@ -489,13 +490,13 @@ const styles = StyleSheet.create({
   },
   recordDate: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontFamily: 'monospace',
   },
   billBadge: {
     fontSize: 10,
-    color: '#818cf8',
-    backgroundColor: 'rgba(129, 140, 248, 0.12)',
+    color: colors.information,
+    backgroundColor: 'rgba(57, 124, 194, 0.15)',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -503,15 +504,15 @@ const styles = StyleSheet.create({
   },
   paymentModeBadge: {
     fontSize: 10,
-    color: '#34d399',
-    backgroundColor: 'rgba(52, 211, 153, 0.12)',
+    color: colors.brandHighlight,
+    backgroundColor: 'rgba(117, 184, 61, 0.15)',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
   },
   noteSnippet: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textMuted,
     flex: 1,
   },
   recordRight: {
@@ -522,13 +523,13 @@ const styles = StyleSheet.create({
   recordAmountDebit: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontFamily: 'monospace',
   },
   recordAmountCredit: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#34d399',
+    color: colors.brandHighlight,
     fontFamily: 'monospace',
   },
   deleteBtn: {
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: colors.border,
     paddingTop: 10,
   },
   actionBtn: {

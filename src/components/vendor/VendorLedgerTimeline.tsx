@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { VendorAuditItem } from '../../core/types';
 import { formatINR } from '../../core/math';
+import { colors } from '../../core/theme';
 
 interface VendorLedgerTimelineProps {
   timeline: VendorAuditItem[];
@@ -46,7 +48,10 @@ export const VendorLedgerTimeline = React.memo(function VendorLedgerTimeline({
             hitSlop={10}
             style={styles.deleteButton}
           >
-            <Text style={styles.deleteText}>Delete ✕</Text>
+            <View style={styles.deleteRow}>
+              <Feather name="trash-2" size={11} color={colors.danger} />
+              <Text style={styles.deleteText}>Delete</Text>
+            </View>
           </Pressable>
         </View>
       </View>
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 13,
     fontStyle: 'italic',
   },
@@ -83,9 +88,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -96,22 +101,22 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     marginBottom: 2,
     fontFamily: 'monospace',
   },
   descText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   balanceText: {
     fontSize: 11,
-    color: '#64748b',
+    color: colors.textMuted,
   },
   balanceVal: {
-    color: '#cbd5e1',
+    color: colors.textPrimary,
     fontWeight: '600',
     fontFamily: 'monospace',
   },
@@ -121,20 +126,26 @@ const styles = StyleSheet.create({
   debitText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#fb7185',
+    color: colors.danger,
     fontFamily: 'monospace',
   },
   creditText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#34d399',
+    color: colors.brandHighlight,
     fontFamily: 'monospace',
   },
   deleteButton: {
     marginTop: 4,
   },
+  deleteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   deleteText: {
     fontSize: 11,
-    color: '#64748b',
+    color: colors.danger,
+    fontWeight: '500',
   },
 });

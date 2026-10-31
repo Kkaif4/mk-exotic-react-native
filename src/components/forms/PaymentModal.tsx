@@ -5,6 +5,7 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { PaymentMode } from '../../core/types';
 import { isValidMoneyAmount, formatINR } from '../../core/math';
+import { colors } from '../../core/theme';
 
 interface PaymentModalProps {
   visible: boolean;
@@ -63,7 +64,7 @@ export const PaymentModal = React.memo(function PaymentModal({
               <Text style={styles.subtitle}>Pay due balance to {vendorName}</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtnBox}>
-              <Feather name="x" size={18} color="#94a3b8" />
+              <Feather name="x" size={18} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -122,7 +123,7 @@ export const PaymentModal = React.memo(function PaymentModal({
             <Button
               title="Save Payment"
               variant="primary"
-              icon={<Feather name="check" size={14} color="#ffffff" />}
+              icon={<Feather name="check" size={14} color={colors.textPrimary} />}
               onPress={handleSave}
               style={styles.saveBtn}
             />
@@ -136,7 +137,7 @@ export const PaymentModal = React.memo(function PaymentModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.85)',
+    backgroundColor: 'rgba(7, 22, 41, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -144,10 +145,10 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     padding: 20,
     shadowColor: '#000000',
     shadowOpacity: 0.35,
@@ -163,22 +164,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   subtitle: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   closeBtnBox: {
     padding: 4,
   },
   dueBox: {
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     marginBottom: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -186,19 +187,19 @@ const styles = StyleSheet.create({
   },
   dueLabel: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   dueValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#fb7185',
+    color: colors.danger,
     fontFamily: 'monospace',
   },
   modeLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#e2e8f0',
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   modeGrid: {
@@ -208,24 +209,24 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingVertical: 8,
     alignItems: 'center',
   },
   modeButtonActive: {
-    borderColor: '#6366f1',
-    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderColor: colors.information,
+    backgroundColor: 'rgba(57, 124, 194, 0.18)',
   },
   modeText: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   modeTextActive: {
-    color: '#818cf8',
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   actions: {

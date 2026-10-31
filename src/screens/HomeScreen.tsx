@@ -32,6 +32,7 @@ import {
   exportCSVReports,
 } from '../core/backup';
 import { generateVendorLifetimeAuditPDF } from '../core/pdf';
+import { colors } from '../core/theme';
 
 export function HomeScreen({
   onNavigateToVendor,
@@ -274,7 +275,7 @@ export function HomeScreen({
       <Card style={styles.backupCard}>
         <View style={styles.backupCardHeader}>
           <View style={styles.brandRow}>
-            <Feather name="database" size={16} color="#818cf8" />
+            <Feather name="database" size={16} color={colors.information} />
             <Text style={styles.backupCardTitle}>Data & Backup Manager</Text>
           </View>
           <Text style={styles.backupCardSub}>100% Offline Local Storage</Text>
@@ -282,7 +283,7 @@ export function HomeScreen({
 
         {backupStatus ? (
           <View style={styles.statusBanner}>
-            <Feather name="info" size={14} color="#34d399" />
+            <Feather name="info" size={14} color={colors.brandHighlight} />
             <Text style={styles.statusBannerText}>{backupStatus}</Text>
           </View>
         ) : null}
@@ -291,21 +292,21 @@ export function HomeScreen({
           <Button
             title="Export Backup (JSON)"
             variant="secondary"
-            icon={<Feather name="download" size={13} color="#e2e8f0" />}
+            icon={<Feather name="download" size={13} color={colors.textPrimary} />}
             onPress={handleExportJSON}
             style={styles.backupBtn}
           />
           <Button
             title="Import Backup (JSON)"
             variant="secondary"
-            icon={<Feather name="upload" size={13} color="#e2e8f0" />}
+            icon={<Feather name="upload" size={13} color={colors.textPrimary} />}
             onPress={triggerFileInput}
             style={styles.backupBtn}
           />
           <Button
             title="Export Reports (CSV)"
             variant="secondary"
-            icon={<Feather name="file-text" size={13} color="#e2e8f0" />}
+            icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
             onPress={handleExportCSV}
             style={styles.backupBtn}
           />
@@ -322,7 +323,7 @@ export function HomeScreen({
         <View style={styles.statCard}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitle}>Total Invoices</Text>
-            <Feather name="file" size={13} color="#94a3b8" />
+            <Feather name="file" size={13} color={colors.textSecondary} />
           </View>
           <Text style={styles.statMainVal}>{stats.totalBills}</Text>
           <Text style={styles.statSubText}>
@@ -333,7 +334,7 @@ export function HomeScreen({
         <View style={styles.statCard}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitleGreen}>Month Sales</Text>
-            <Feather name="trending-up" size={13} color="#34d399" />
+            <Feather name="trending-up" size={13} color={colors.brandHighlight} />
           </View>
           <Text style={styles.statValGreen}>{formatINR(stats.monthSalesTotal)}</Text>
           <Text style={styles.statSubText}>Customer Outstandings</Text>
@@ -342,7 +343,7 @@ export function HomeScreen({
         <View style={styles.statCard}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitleIndigo}>Month Purchases</Text>
-            <Feather name="shopping-bag" size={13} color="#818cf8" />
+            <Feather name="shopping-bag" size={13} color={colors.information} />
           </View>
           <Text style={styles.statValIndigo}>{formatINR(stats.monthPurchasesTotal)}</Text>
           <Text style={styles.statSubText}>Vendor Procurements</Text>
@@ -358,7 +359,7 @@ export function HomeScreen({
           <Feather
             name="truck"
             size={13}
-            color={activeTab === 'vendors' ? '#ffffff' : '#94a3b8'}
+            color={activeTab === 'vendors' ? colors.textPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -377,7 +378,7 @@ export function HomeScreen({
           <Feather
             name="users"
             size={13}
-            color={activeTab === 'customers' ? '#ffffff' : '#94a3b8'}
+            color={activeTab === 'customers' ? colors.textPrimary : colors.textSecondary}
           />
           <Text
             style={[
@@ -400,12 +401,12 @@ export function HomeScreen({
         <Feather
           name="search"
           size={16}
-          color={searchFocused ? '#818cf8' : '#94a3b8'}
+          color={searchFocused ? colors.information : colors.textSecondary}
           style={styles.searchIcon}
         />
         <TextInput
           placeholder={`Search ${activeTab === 'vendors' ? 'vendors by name, bill #, phone' : 'customers by name, bill #' }...`}
-          placeholderTextColor="#64748b"
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onFocus={() => setSearchFocused(true)}
@@ -418,7 +419,7 @@ export function HomeScreen({
             hitSlop={10}
             style={styles.clearSearchBtn}
           >
-            <Feather name="x" size={14} color="#94a3b8" />
+            <Feather name="x" size={14} color={colors.textSecondary} />
           </Pressable>
         ) : null}
       </View>
@@ -428,7 +429,7 @@ export function HomeScreen({
         <View style={styles.listContainer}>
           {filteredVendors.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Feather name="inbox" size={32} color="#475569" />
+              <Feather name="inbox" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>
                 {searchQuery
                   ? `No vendors found matching "${searchQuery}".`
@@ -471,7 +472,7 @@ export function HomeScreen({
               value={selectedMonth}
               onChangeText={setSelectedMonth}
               placeholder="YYYY-MM"
-              placeholderTextColor="#64748b"
+              placeholderTextColor={colors.textMuted}
             />
             <Text style={styles.monthNotice}>
               Showing all customer sales for {selectedMonth}
@@ -480,7 +481,7 @@ export function HomeScreen({
 
           {filteredCustomers.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Feather name="inbox" size={32} color="#475569" />
+              <Feather name="inbox" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>
                 {searchQuery
                   ? `No customers found matching "${searchQuery}".`
@@ -517,7 +518,7 @@ export function HomeScreen({
         <View style={styles.header}>
           <View style={styles.brandRow}>
             <View style={styles.logoBadge}>
-              <Feather name="package" size={20} color="#38bdf8" />
+              <Feather name="package" size={20} color={colors.information} />
             </View>
             <View>
               <Text style={styles.appTitle}>MK EXOTIC FRUITS</Text>
@@ -577,7 +578,7 @@ export function HomeScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#020617', // Slate 950
+    backgroundColor: colors.appBackground,
   },
   container: {
     padding: 16,
@@ -592,7 +593,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
     paddingBottom: 14,
   },
   brandRow: {
@@ -604,21 +605,21 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    backgroundColor: 'rgba(57, 124, 194, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: colors.border,
   },
   appTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#ffffff',
+    color: colors.textPrimary,
     letterSpacing: -0.5,
   },
   appSubtitle: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   headerMeta: {
@@ -629,22 +630,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   onlineDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#10b981',
+    backgroundColor: colors.brandHighlight,
   },
   onlineText: {
     fontSize: 11,
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   desktopGrid: {
@@ -674,10 +675,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#0b1329',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     padding: 12,
   },
   statIconRow: {
@@ -687,55 +688,55 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   statTitleGreen: {
     fontSize: 10,
-    color: '#34d399',
+    color: colors.brandHighlight,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   statTitleIndigo: {
     fontSize: 10,
-    color: '#818cf8',
+    color: colors.information,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   statMainVal: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#ffffff',
+    color: colors.textPrimary,
     marginTop: 4,
     fontFamily: 'monospace',
   },
   statValGreen: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#34d399',
+    color: colors.brandHighlight,
     marginTop: 4,
     fontFamily: 'monospace',
   },
   statValIndigo: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#818cf8',
+    color: colors.information,
     marginTop: 4,
     fontFamily: 'monospace',
   },
   statSubText: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textMuted,
     marginTop: 3,
   },
   segmentControl: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 3,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
   },
   segmentBtn: {
     flex: 1,
@@ -747,67 +748,67 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   segmentBtnActive: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.elevatedSurface,
   },
   segmentText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: colors.textSecondary,
   },
   segmentTextActive: {
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontWeight: '700',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surface,
     borderWidth: 1.5,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
   },
   searchContainerFocused: {
-    borderColor: '#6366f1',
-    backgroundColor: '#0d1527',
+    borderColor: colors.information,
+    backgroundColor: colors.elevatedSurface,
   },
   searchIcon: {
     marginRight: 8,
   },
   searchInput: {
-    color: '#ffffff',
+    color: colors.textPrimary,
     fontSize: 13,
     flex: 1,
     padding: 0,
   },
   clearSearchBtn: {
     padding: 4,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.hoverSurface,
     borderRadius: 10,
   },
   monthSelectorBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0b1329',
+    backgroundColor: colors.surface,
     padding: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     marginBottom: 10,
   },
   monthSelectLabel: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   monthInput: {
-    backgroundColor: '#020617',
+    backgroundColor: colors.appBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     borderRadius: 6,
-    color: '#ffffff',
+    color: colors.textPrimary,
     paddingHorizontal: 8,
     paddingVertical: 4,
     fontSize: 12,
@@ -817,7 +818,7 @@ const styles = StyleSheet.create({
   },
   monthNotice: {
     fontSize: 11,
-    color: '#64748b',
+    color: colors.textMuted,
     fontStyle: 'italic',
     flex: 1,
   },
@@ -825,22 +826,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyCard: {
-    backgroundColor: '#0b1329',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: colors.border,
     padding: 32,
     alignItems: 'center',
     gap: 10,
   },
   emptyMsg: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 13,
     textAlign: 'center',
   },
   backupCard: {
-    backgroundColor: '#0b1329',
-    borderColor: '#1e293b',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
   },
@@ -850,24 +851,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.border,
     paddingBottom: 8,
   },
   backupCardTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
   },
   backupCardSub: {
     fontSize: 10,
-    color: '#64748b',
+    color: colors.textMuted,
   },
   statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(52, 211, 153, 0.1)',
-    borderColor: 'rgba(52, 211, 153, 0.3)',
+    backgroundColor: 'rgba(38, 148, 91, 0.15)',
+    borderColor: colors.success,
     borderWidth: 1,
     borderRadius: 8,
     padding: 8,
@@ -875,7 +876,7 @@ const styles = StyleSheet.create({
   },
   statusBannerText: {
     fontSize: 11,
-    color: '#34d399',
+    color: colors.brandHighlight,
     fontWeight: '500',
   },
   backupButtonsGrid: {

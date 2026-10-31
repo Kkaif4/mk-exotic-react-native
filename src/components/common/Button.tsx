@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, View } from 'react-native';
+import { colors } from '../../core/theme';
 
 interface ButtonProps {
   title: string;
@@ -55,32 +56,32 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   primary: {
-    backgroundColor: '#4f46e5', // Modern Indigo
+    backgroundColor: colors.primaryButton, // #1D7548
     borderWidth: 1,
-    borderColor: '#6366f1',
+    borderColor: colors.buttonHover,      // #258A56
   },
   secondary: {
-    backgroundColor: '#1e293b', // Slate 800
+    backgroundColor: colors.elevatedSurface, // #172D44
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,              // #243B51
   },
   danger: {
-    backgroundColor: '#e11d48',
+    backgroundColor: colors.brandAccent, // #C92D32
     borderWidth: 1,
-    borderColor: '#f43f5e',
+    borderColor: colors.danger,          // #D94A50
   },
   success: {
-    backgroundColor: '#059669', // Emerald
+    backgroundColor: colors.success,       // #26945B
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: colors.brandHighlight, // #75B83D
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: colors.border,
   },
   pressed: {
-    opacity: 0.82,
+    opacity: 0.85,
     transform: [{ scale: 0.985 }],
   },
   disabled: {
@@ -94,9 +95,9 @@ const styles = StyleSheet.create({
 });
 
 const textStyles = StyleSheet.create({
-  primary: { color: '#ffffff' },
-  secondary: { color: '#e2e8f0' },
-  danger: { color: '#ffffff' },
-  success: { color: '#ffffff' },
-  outline: { color: '#cbd5e1' },
+  primary: { color: colors.textPrimary },
+  secondary: { color: colors.textPrimary },
+  danger: { color: colors.textPrimary },
+  success: { color: colors.textPrimary },
+  outline: { color: colors.textSecondary },
 });
