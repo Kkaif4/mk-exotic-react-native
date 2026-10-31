@@ -56,3 +56,11 @@
   - [x] Export itemized CSV reports for sales and purchases (`exportCSVReports`)
 - [x] Automated test suite expanded to 6 test suites and 26 tests (`backup-and-export.test.ts`)
 - [x] Web build verification (`expo export -p web`) passed cleanly
+
+## Phase 7: Vendor Auto-Registration, In-Card Itemized Bills & Modern Search Overhaul
+- [x] Auto-register unknown vendors on purchase bill addition in `defaultStorage.addBill`
+- [x] Dynamic vendor discovery in `useVendors` across both registered vendors table and all purchase bills
+- [x] Itemized bills list and partial payments list directly embedded inside `VendorCard` with delete capability
+- [x] Monthly procurement vs payment breakdown displayed alongside lifetime cumulative due
+- [x] Search box overhaul: prominent modern input container, focus highlights, multi-field matching (name, bill #, phone, notes)
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
