@@ -351,7 +351,7 @@ export async function generateVendorLifetimeAuditPDF(
   y += 8;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INFO BLOCK — vendor name, contact, audit type, due status
+  // INFO BLOCK — vendor name, contact, audit type
   // ═══════════════════════════════════════════════════════════════════════════
 
   doc.setFont('helvetica', 'normal');
@@ -363,17 +363,6 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setTextColor(...BLACK);
   doc.text(vendorName, M + 22, y);
 
-  // Remaining Due on Right
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  if (remainingDue > 0) {
-    doc.setTextColor(200, 30, 30); // Red
-    doc.text(`REMAINING DUE: Rs. ${fmtCurrency(remainingDue)}`, PW - M, y, { align: 'right' });
-  } else {
-    doc.setTextColor(30, 140, 60); // Green
-    doc.text('STATUS: FULLY SETTLED (Rs. 0.00)', PW - M, y, { align: 'right' });
-  }
-
   y += 6;
 
   doc.setFont('helvetica', 'normal');
@@ -384,11 +373,6 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setFontSize(9);
   doc.setTextColor(...DARK);
   doc.text(contactNumber || '--', M + 22, y);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...GREY);
-  doc.text(`Purchases: Rs. ${fmtCurrency(totalPurchases)}  |  Paid: Rs. ${fmtCurrency(totalPaid)}`, PW - M, y, { align: 'right' });
 
   y += 6;
 
