@@ -122,7 +122,7 @@ export async function generateCustomerMonthlyPDF(
     doc.text('STATUS: FULLY SETTLED (PAID)', PW - M, y, { align: 'right' });
   } else {
     doc.setTextColor(200, 30, 30); // Red
-    doc.text('STATUS: UNPAID (DUE PENDING)', PW - M, y, { align: 'right' });
+    doc.text('STATUS: UNPAID', PW - M, y, { align: 'right' });
   }
 
   y += 6;

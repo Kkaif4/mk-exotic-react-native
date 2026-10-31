@@ -89,5 +89,14 @@
 - [x] Streamline Customer monthly settlement: enforce single one-click whole-month payment toggle (`Mark Month as Paid` / `Mark Month Unpaid`) with zero row-level confusion
 - [x] All 6 test suites with 28 tests passing cleanly with 100% green
 
+## Phase 11: Unified Single-Row Toolbar & Polished Search Focus Styling
+- [x] Eliminate ugly browser input outlines on web: applied `outlineStyle: 'none'` across all search and filter inputs with soft elevated glow container styling
+- [x] Unify all filters into a single horizontal toolbar row (`styles.unifiedToolbarRow`):
+  - Left: Compact tab switcher (`Vendors` / `Customers`)
+  - Middle: Searchable entity dropdowns (`VendorDropdown` / `CustomerDropdown`) and contextual filters (`All/Due/Settled/Adv` pills or `Month: YYYY-MM`)
+  - Right: Sleek outline-free inline search box with clear button
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+
 
 

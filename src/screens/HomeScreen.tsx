@@ -449,189 +449,190 @@ export function HomeScreen({
         </View>
       </View>
 
-      {/* Tabs Selector Bar */}
-      <View style={styles.segmentControl}>
-        <Pressable
-          onPress={() => setActiveTab("customers")}
-          style={[
-            styles.segmentBtn,
-            activeTab === "customers" && styles.segmentBtnActive,
-          ]}
-        >
-          <Feather
-            name="users"
-            size={13}
-            color={
-              activeTab === "customers"
-                ? colors.textPrimary
-                : colors.textSecondary
-            }
-          />
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === "customers" && styles.segmentTextActive,
-            ]}
-          >
-            Customers (Monthly) ({entityNames.customers.length})
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setActiveTab("vendors")}
-          style={[
-            styles.segmentBtn,
-            activeTab === "vendors" && styles.segmentBtnActive,
-          ]}
-        >
-          <Feather
-            name="truck"
-            size={13}
-            color={
-              activeTab === "vendors"
-                ? colors.textPrimary
-                : colors.textSecondary
-            }
-          />
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === "vendors" && styles.segmentTextActive,
-            ]}
-          >
-            Vendors (Lifetime Due) ({vendorSummaries.length})
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Modern, Redesigned Search Box */}
-      <View
-        style={[
-          styles.searchContainer,
-          searchFocused && styles.searchContainerFocused,
-        ]}
-      >
-        <Feather
-          name="search"
-          size={16}
-          color={searchFocused ? colors.information : colors.textSecondary}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          placeholder={`Search ${activeTab === "vendors" ? "vendors by name, bill #, phone" : "customers by name, bill #"}...`}
-          placeholderTextColor={colors.textMuted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          style={styles.searchInput}
-        />
-        {searchQuery ? (
+      {/* Unified Single-Row Navigation, Filters & Search Toolbar */}
+      <View style={styles.unifiedToolbarRow}>
+        {/* Left: Compact Tab Switcher (Vendors / Customers) */}
+        <View style={styles.toolbarSegmentControl}>
           <Pressable
-            onPress={() => setSearchQuery("")}
-            hitSlop={10}
-            style={styles.clearSearchBtn}
+            onPress={() => setActiveTab("vendors")}
+            style={[
+              styles.toolbarSegmentBtn,
+              activeTab === "vendors" && styles.toolbarSegmentBtnActive,
+            ]}
           >
-            <Feather name="x" size={14} color={colors.textSecondary} />
+            <Feather
+              name="truck"
+              size={12}
+              color={activeTab === "vendors" ? colors.textPrimary : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.toolbarSegmentText,
+                activeTab === "vendors" && styles.toolbarSegmentTextActive,
+              ]}
+            >
+              Vendors ({vendorSummaries.length})
+            </Text>
           </Pressable>
-        ) : null}
+          <Pressable
+            onPress={() => setActiveTab("customers")}
+            style={[
+              styles.toolbarSegmentBtn,
+              activeTab === "customers" && styles.toolbarSegmentBtnActive,
+            ]}
+          >
+            <Feather
+              name="users"
+              size={12}
+              color={activeTab === "customers" ? colors.textPrimary : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.toolbarSegmentText,
+                activeTab === "customers" && styles.toolbarSegmentTextActive,
+              ]}
+            >
+              Customers ({entityNames.customers.length})
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Middle: Contextual Entity & Secondary Filters in the SAME Row */}
+        {activeTab === "vendors" ? (
+          <>
+            <VendorDropdown
+              vendorSummaries={vendorSummaries}
+              selectedVendorId={selectedVendorId}
+              onSelectVendor={(vId) => setSelectedVendorId(vId)}
+            />
+            <View style={styles.inlineStatusGroup}>
+              <Pressable
+                onPress={() => setVendorStatusFilter("ALL")}
+                style={[
+                  styles.inlineStatusBtn,
+                  vendorStatusFilter === "ALL" && styles.inlineStatusBtnActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.inlineStatusText,
+                    vendorStatusFilter === "ALL" && styles.inlineStatusTextActive,
+                  ]}
+                >
+                  All ({vendorCounts.all})
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setVendorStatusFilter("DUE")}
+                style={[
+                  styles.inlineStatusBtn,
+                  vendorStatusFilter === "DUE" && styles.inlineStatusBtnDueActive,
+                ]}
+              >
+                <View style={[styles.filterDot, { backgroundColor: colors.danger }]} />
+                <Text
+                  style={[
+                    styles.inlineStatusText,
+                    vendorStatusFilter === "DUE" && styles.inlineStatusTextActive,
+                  ]}
+                >
+                  Due ({vendorCounts.due})
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setVendorStatusFilter("SETTLED")}
+                style={[
+                  styles.inlineStatusBtn,
+                  vendorStatusFilter === "SETTLED" && styles.inlineStatusBtnSettledActive,
+                ]}
+              >
+                <View style={[styles.filterDot, { backgroundColor: colors.brandHighlight }]} />
+                <Text
+                  style={[
+                    styles.inlineStatusText,
+                    vendorStatusFilter === "SETTLED" && styles.inlineStatusTextActive,
+                  ]}
+                >
+                  Settled ({vendorCounts.settled})
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setVendorStatusFilter("ADVANCE")}
+                style={[
+                  styles.inlineStatusBtn,
+                  vendorStatusFilter === "ADVANCE" && styles.inlineStatusBtnAdvanceActive,
+                ]}
+              >
+                <View style={[styles.filterDot, { backgroundColor: colors.information }]} />
+                <Text
+                  style={[
+                    styles.inlineStatusText,
+                    vendorStatusFilter === "ADVANCE" && styles.inlineStatusTextActive,
+                  ]}
+                >
+                  Adv ({vendorCounts.advance})
+                </Text>
+              </Pressable>
+            </View>
+          </>
+        ) : (
+          <>
+            <CustomerDropdown
+              customers={entityNames.customers}
+              selectedCustomer={selectedCustomer}
+              onSelectCustomer={setSelectedCustomer}
+              bills={bills}
+              selectedMonth={selectedMonth}
+            />
+            <View style={styles.inlineMonthPicker}>
+              <Feather name="calendar" size={12} color={colors.information} />
+              <Text style={styles.inlineMonthLabel}>Month:</Text>
+              <TextInput
+                style={styles.inlineMonthInput}
+                value={selectedMonth}
+                onChangeText={setSelectedMonth}
+                placeholder="YYYY-MM"
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+          </>
+        )}
+
+        {/* Right: Sleek, Outline-Free Search Input in the SAME Row */}
+        <View
+          style={[
+            styles.inlineSearchBox,
+            searchFocused && styles.inlineSearchBoxFocused,
+          ]}
+        >
+          <Feather
+            name="search"
+            size={13}
+            color={searchFocused ? colors.information : colors.textSecondary}
+          />
+          <TextInput
+            placeholder={activeTab === "vendors" ? "Search vendors..." : "Search bills..."}
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            style={styles.inlineSearchInput}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery("")} hitSlop={6}>
+              <Feather name="x" size={12} color={colors.textSecondary} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
-      {/* Tab 1: Vendors (Lifetime Due — Filtered by Default to First Vendor) */}
+      {/* Tab 1: Vendors Content (Lifetime Due) */}
       {activeTab === "vendors" && (
         <View style={styles.listContainer}>
-          {/* Vendor Searchable Dropdown Filter */}
-          <VendorDropdown
-            vendorSummaries={vendorSummaries}
-            selectedVendorId={selectedVendorId}
-            onSelectVendor={(vId) => setSelectedVendorId(vId)}
-          />
-
-          {/* Status Filter Chips */}
-          <View style={styles.statusFilterRow}>
-            <Pressable
-              onPress={() => setVendorStatusFilter("ALL")}
-              style={[
-                styles.filterChip,
-                vendorStatusFilter === "ALL" && styles.filterChipActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  vendorStatusFilter === "ALL" && styles.filterChipTextActive,
-                ]}
-              >
-                All ({vendorCounts.all})
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setVendorStatusFilter("DUE")}
-              style={[
-                styles.filterChip,
-                vendorStatusFilter === "DUE" && styles.filterChipDueActive,
-              ]}
-            >
-              <View
-                style={[styles.filterDot, { backgroundColor: colors.danger }]}
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  vendorStatusFilter === "DUE" && styles.filterChipTextActive,
-                ]}
-              >
-                Due Pending ({vendorCounts.due})
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setVendorStatusFilter("SETTLED")}
-              style={[
-                styles.filterChip,
-                vendorStatusFilter === "SETTLED" &&
-                  styles.filterChipSettledActive,
-              ]}
-            >
-              <View
-                style={[
-                  styles.filterDot,
-                  { backgroundColor: colors.brandHighlight },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  vendorStatusFilter === "SETTLED" &&
-                    styles.filterChipTextActive,
-                ]}
-              >
-                Settled ({vendorCounts.settled})
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setVendorStatusFilter("ADVANCE")}
-              style={[
-                styles.filterChip,
-                vendorStatusFilter === "ADVANCE" &&
-                  styles.filterChipAdvanceActive,
-              ]}
-            >
-              <View
-                style={[styles.filterDot, { backgroundColor: colors.information }]}
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  vendorStatusFilter === "ADVANCE" &&
-                    styles.filterChipTextActive,
-                ]}
-              >
-                Advance ({vendorCounts.advance})
-              </Text>
-            </Pressable>
-          </View>
 
           {/* If specific vendor is selected (default: first vendor), show that vendor's row! */}
           {selectedVendorSummary ? (
@@ -736,35 +737,6 @@ export function HomeScreen({
       {/* Tab 2: Customers (Monthly Settlement View) */}
       {activeTab === "customers" && (
         <View style={styles.listContainer}>
-          {/* Customer Filter Controls: Mandatory Searchable Dropdown & Month Filter */}
-          <View style={styles.customerFilterControls}>
-            <CustomerDropdown
-              customers={entityNames.customers}
-              selectedCustomer={selectedCustomer}
-              onSelectCustomer={setSelectedCustomer}
-              bills={bills}
-              selectedMonth={selectedMonth}
-            />
-
-            {/* Month Selector Strip */}
-            <View style={styles.monthSelectorBar}>
-              <View style={styles.monthSelectorHeader}>
-                <Feather name="calendar" size={13} color={colors.information} />
-                <Text style={styles.monthSelectLabel}>Month Filter:</Text>
-              </View>
-              <TextInput
-                style={styles.monthInput}
-                value={selectedMonth}
-                onChangeText={setSelectedMonth}
-                placeholder="YYYY-MM"
-                placeholderTextColor={colors.textMuted}
-              />
-              <Text style={styles.monthNotice}>
-                Showing customer bills for {selectedMonth}
-              </Text>
-            </View>
-          </View>
-
           {/* Filter Result Counter Banner */}
           {selectedCustomer ? (
             <View style={styles.filterResultBanner}>
@@ -1038,106 +1010,139 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 3,
   },
-  segmentControl: {
-    flexDirection: "row",
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  segmentBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 9,
-  },
-  segmentBtnActive: {
-    backgroundColor: colors.elevatedSurface,
-  },
-  segmentText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  segmentTextActive: {
-    color: colors.textPrimary,
-    fontWeight: "700",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
-  },
-  searchContainerFocused: {
-    borderColor: colors.information,
-    backgroundColor: colors.elevatedSurface,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    flex: 1,
-    padding: 0,
-  },
-  clearSearchBtn: {
-    padding: 4,
-    backgroundColor: colors.hoverSurface,
-    borderRadius: 10,
-  },
-  customerFilterControls: {
-    marginBottom: 6,
-  },
-  monthSelectorBar: {
+  unifiedToolbarRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flexWrap: "wrap",
+    zIndex: 100,
+    marginBottom: 8,
+  },
+  toolbarSegmentControl: {
+    flexDirection: "row",
     backgroundColor: colors.surface,
-    padding: 8,
-    borderRadius: 10,
+    borderRadius: 8,
+    padding: 3,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 10,
+    height: 38,
+    alignItems: "center",
   },
-  monthSelectorHeader: {
+  toolbarSegmentBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
-  monthSelectLabel: {
+  toolbarSegmentBtnActive: {
+    backgroundColor: colors.elevatedSurface,
+  },
+  toolbarSegmentText: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: "700",
-    textTransform: "uppercase",
+    fontWeight: "600",
   },
-  monthInput: {
-    backgroundColor: colors.appBackground,
+  toolbarSegmentTextActive: {
+    color: colors.textPrimary,
+    fontWeight: "700",
+  },
+  inlineStatusGroup: {
+    flexDirection: "row",
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    padding: 3,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 6,
-    color: colors.textPrimary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 12,
-    width: 90,
-    fontFamily: "monospace",
-    textAlign: "center",
+    height: 38,
+    alignItems: "center",
+    gap: 2,
   },
-  monthNotice: {
+  inlineStatusBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  inlineStatusBtnActive: {
+    backgroundColor: colors.elevatedSurface,
+  },
+  inlineStatusBtnDueActive: {
+    backgroundColor: "rgba(217, 74, 80, 0.18)",
+  },
+  inlineStatusBtnSettledActive: {
+    backgroundColor: "rgba(38, 148, 91, 0.18)",
+  },
+  inlineStatusBtnAdvanceActive: {
+    backgroundColor: "rgba(57, 124, 194, 0.18)",
+  },
+  inlineStatusText: {
     fontSize: 11,
-    color: colors.textMuted,
-    fontStyle: "italic",
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
+  inlineStatusTextActive: {
+    color: colors.textPrimary,
+    fontWeight: "700",
+  },
+  inlineMonthPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 38,
+    paddingHorizontal: 10,
+    gap: 6,
+  },
+  inlineMonthLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  inlineMonthInput: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: "monospace",
+    padding: 0,
+    width: 68,
+    textAlign: "center",
+    // @ts-ignore
+    outlineStyle: "none",
+  },
+  inlineSearchBox: {
     flex: 1,
+    minWidth: 140,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 38,
+    paddingHorizontal: 10,
+    gap: 6,
+  },
+  inlineSearchBoxFocused: {
+    borderColor: colors.information,
+    backgroundColor: colors.elevatedSurface,
+    shadowColor: colors.information,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  inlineSearchInput: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 12,
+    padding: 0,
+    // @ts-ignore
+    outlineStyle: "none",
   },
   filterResultBanner: {
     flexDirection: "row",

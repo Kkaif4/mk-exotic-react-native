@@ -49,94 +49,70 @@ export const VendorDropdown = React.memo(function VendorDropdown({
 
   return (
     <View style={styles.container}>
-      {/* Label indicating vendor selection */}
-      <View style={styles.labelRow}>
-        <Text style={styles.label}>
-          Vendor Filter <Text style={styles.mandatoryAsterisk}>* (Default: First Vendor)</Text>
-        </Text>
-        {selectedVendor ? (
-          <Text style={styles.labelCountBadge}>
-            {selectedVendor.billCount} bills · {selectedVendor.paymentCount} payments
-          </Text>
-        ) : (
-          <Text style={styles.labelCountBadge}>
-            All {vendorSummaries.length} vendors
-          </Text>
-        )}
-      </View>
-
-      {/* Dropdown Trigger Button */}
+      {/* Inline Compact Dropdown Trigger */}
       <Pressable
         onPress={() => setIsOpen((prev) => !prev)}
         style={[styles.triggerBtn, isOpen && styles.triggerBtnOpen]}
       >
-        <View style={styles.triggerLeft}>
-          <Feather name="truck" size={14} color={colors.information} />
-          {selectedVendor ? (
-            <Text style={styles.selectedVendorText} numberOfLines={1}>
-              {selectedVendor.vendorName}
-            </Text>
-          ) : selectedVendorId === 'ALL' ? (
-            <Text style={styles.selectedVendorText}>All Vendors (Overview)</Text>
-          ) : (
-            <Text style={styles.placeholderText}>Select a vendor...</Text>
-          )}
-        </View>
+        <Feather name="truck" size={13} color={colors.information} />
+        <Text style={styles.vendorLabel}>Vendor:</Text>
+        <Text style={styles.selectedVendorText} numberOfLines={1}>
+          {selectedVendor ? selectedVendor.vendorName : 'All Vendors'}
+        </Text>
 
-        <View style={styles.triggerRight}>
-          {selectedVendor ? (
-            <View
+        {selectedVendor ? (
+          <View
+            style={[
+              styles.dueBadgePill,
+              selectedVendor.remainingDue > 0
+                ? styles.dueBadgeDanger
+                : styles.dueBadgeSettled,
+            ]}
+          >
+            <Text
               style={[
-                styles.dueBadgePill,
+                styles.dueBadgePillText,
                 selectedVendor.remainingDue > 0
-                  ? styles.dueBadgeDanger
-                  : styles.dueBadgeSettled,
+                  ? styles.dueTextDanger
+                  : styles.dueTextSettled,
               ]}
             >
-              <Text
-                style={[
-                  styles.dueBadgePillText,
-                  selectedVendor.remainingDue > 0
-                    ? styles.dueTextDanger
-                    : styles.dueTextSettled,
-                ]}
-              >
-                {selectedVendor.remainingDue > 0
-                  ? `Due: ${formatINR(selectedVendor.remainingDue)}`
-                  : 'Settled'}
-              </Text>
-            </View>
-          ) : null}
-          <Feather
-            name={isOpen ? 'chevron-up' : 'chevron-down'}
-            size={16}
-            color={colors.textSecondary}
-          />
-        </View>
+              {selectedVendor.remainingDue > 0
+                ? `Due: ${formatINR(selectedVendor.remainingDue)}`
+                : 'Settled'}
+            </Text>
+          </View>
+        ) : null}
+
+        <Feather
+          name={isOpen ? 'chevron-up' : 'chevron-down'}
+          size={14}
+          color={colors.textSecondary}
+        />
       </Pressable>
 
-      {/* Dropdown Menu & Search Input */}
+      {/* Dropdown Menu & Search Input (Floats right below) */}
       {isOpen && (
         <View style={styles.dropdownMenu}>
           {/* Search Input Box */}
           <View style={styles.searchBox}>
             <Feather
               name="search"
-              size={14}
+              size={13}
               color={colors.textSecondary}
               style={styles.searchIcon}
             />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search vendor name..."
+              placeholder="Search vendor..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
             />
             {searchQuery ? (
-              <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                <Feather name="x" size={13} color={colors.textSecondary} />
+              <Pressable onPress={() => setSearchQuery('')} hitSlop={6}>
+                <Feather name="x" size={12} color={colors.textSecondary} />
               </Pressable>
             ) : null}
           </View>
@@ -172,7 +148,7 @@ export const VendorDropdown = React.memo(function VendorDropdown({
                 </Text>
               </View>
               {selectedVendorId === 'ALL' && (
-                <Feather name="check" size={13} color={colors.brandHighlight} />
+                <Feather name="check" size={12} color={colors.brandHighlight} />
               )}
             </Pressable>
 
@@ -240,7 +216,7 @@ export const VendorDropdown = React.memo(function VendorDropdown({
                       {isSelected && (
                         <Feather
                           name="check"
-                          size={13}
+                          size={12}
                           color={colors.brandHighlight}
                         />
                       )}
@@ -259,72 +235,39 @@ export const VendorDropdown = React.memo(function VendorDropdown({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    zIndex: 25,
-    marginBottom: 10,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  mandatoryAsterisk: {
-    color: colors.brandHighlight,
-    fontWeight: '700',
-    textTransform: 'none',
-  },
-  labelCountBadge: {
-    fontSize: 11,
-    color: colors.information,
-    fontWeight: '600',
-    fontFamily: 'monospace',
+    zIndex: 100,
   },
   triggerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+    gap: 6,
   },
   triggerBtnOpen: {
     borderColor: colors.information,
     backgroundColor: colors.elevatedSurface,
   },
-  triggerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
+  vendorLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   selectedVendorText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  triggerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    maxWidth: 130,
   },
   dueBadgePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 5,
     borderWidth: 1,
   },
   dueBadgeDanger: {
@@ -336,7 +279,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(38, 148, 91, 0.3)',
   },
   dueBadgePillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     fontFamily: 'monospace',
   },
@@ -347,17 +290,21 @@ const styles = StyleSheet.create({
     color: colors.brandHighlight,
   },
   dropdownMenu: {
+    position: 'absolute',
+    top: 42,
+    left: 0,
+    minWidth: 280,
     backgroundColor: colors.elevatedSurface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 10,
-    marginTop: 4,
-    padding: 8,
+    padding: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 9999,
   },
   searchBox: {
     flexDirection: 'row',
@@ -365,9 +312,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.appBackground,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    height: 32,
     marginBottom: 6,
   },
   searchIcon: {
@@ -376,8 +323,10 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     padding: 0,
+    // @ts-ignore
+    outlineStyle: 'none',
   },
   optionsList: {
     maxHeight: 200,
@@ -386,8 +335,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
     borderRadius: 6,
   },
   optionItemSelected: {
@@ -399,7 +348,7 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
     flex: 1,
   },
   optionDot: {
@@ -417,7 +366,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.information,
   },
   optionText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textPrimary,
     fontWeight: '500',
   },
@@ -428,7 +377,7 @@ const styles = StyleSheet.create({
   optionRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   optionDueText: {
     fontSize: 11,
@@ -436,7 +385,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   emptyOption: {
-    padding: 14,
+    padding: 12,
     alignItems: 'center',
   },
   emptyOptionText: {

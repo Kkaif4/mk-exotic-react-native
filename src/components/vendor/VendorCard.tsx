@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { VendorFinancialSummary } from '../../core/types';
-import { formatINR } from '../../core/math';
-import { colors } from '../../core/theme';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  useWindowDimensions,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { VendorFinancialSummary } from "../../core/types";
+import { formatINR } from "../../core/math";
+import { colors } from "../../core/theme";
 
 export interface VendorCardProps {
   summary: VendorFinancialSummary;
   contactNumber?: string;
   notes?: string;
   onSelectVendor: (vendorId: string, vendorName: string) => void;
-  onOpenPaymentModal: (vendorId: string, vendorName: string, remainingDue: number) => void;
+  onOpenPaymentModal: (
+    vendorId: string,
+    vendorName: string,
+    remainingDue: number,
+  ) => void;
   onDownloadPDF?: (vendorId: string, vendorName: string) => void;
   onDeleteBill?: (id: string) => void;
   onDeletePayment?: (id: string) => void;
@@ -29,32 +39,32 @@ export const VendorCard = React.memo(function VendorCard({
 
   const getStatusBadge = () => {
     switch (summary.status) {
-      case 'DUE':
+      case "DUE":
         return {
-          label: 'Due Pending',
+          label: "Due Pending",
           dotColor: colors.danger,
-          bg: 'rgba(217, 74, 80, 0.12)',
+          bg: "rgba(217, 74, 80, 0.12)",
           text: colors.danger,
         };
-      case 'SETTLED':
+      case "SETTLED":
         return {
-          label: 'Settled',
+          label: "Settled",
           dotColor: colors.brandHighlight,
-          bg: 'rgba(117, 184, 61, 0.12)',
+          bg: "rgba(117, 184, 61, 0.12)",
           text: colors.brandHighlight,
         };
-      case 'ADVANCE':
+      case "ADVANCE":
         return {
-          label: 'Advance',
+          label: "Advance",
           dotColor: colors.information,
-          bg: 'rgba(57, 124, 194, 0.12)',
+          bg: "rgba(57, 124, 194, 0.12)",
           text: colors.information,
         };
       default:
         return {
-          label: 'No Bills',
+          label: "No Bills",
           dotColor: colors.textMuted,
-          bg: 'rgba(116, 141, 164, 0.12)',
+          bg: "rgba(116, 141, 164, 0.12)",
           text: colors.textSecondary,
         };
     }
@@ -64,10 +74,7 @@ export const VendorCard = React.memo(function VendorCard({
 
   return (
     <View
-      style={[
-        styles.rowContainer,
-        isHovered && styles.rowContainerHovered,
-      ]}
+      style={[styles.rowContainer, isHovered && styles.rowContainerHovered]}
       // @ts-ignore - web hover support
       onMouseEnter={() => setIsHovered(true)}
       // @ts-ignore - web hover support
@@ -88,7 +95,9 @@ export const VendorCard = React.memo(function VendorCard({
               {summary.vendorName}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-              <View style={[styles.statusDot, { backgroundColor: badge.dotColor }]} />
+              <View
+                style={[styles.statusDot, { backgroundColor: badge.dotColor }]}
+              />
               <Text style={[styles.statusText, { color: badge.text }]}>
                 {badge.label}
               </Text>
@@ -103,7 +112,11 @@ export const VendorCard = React.memo(function VendorCard({
               </View>
             ) : null}
             <View style={styles.metaItem}>
-              <Feather name="file-text" size={11} color={colors.textSecondary} />
+              <Feather
+                name="file-text"
+                size={11}
+                color={colors.textSecondary}
+              />
               <Text style={styles.metaText}>
                 {summary.billCount} bills · {summary.paymentCount} payments
               </Text>
@@ -120,28 +133,32 @@ export const VendorCard = React.memo(function VendorCard({
         </View>
 
         {/* Column 2: Due Balance & Lifetime Summary */}
-        <View style={[styles.dueInfoCol, isDesktop ? styles.desktopDueCol : styles.mobileDueCol]}>
-          {summary.status === 'DUE' ? (
+        <View
+          style={[
+            styles.dueInfoCol,
+            isDesktop ? styles.desktopDueCol : styles.mobileDueCol,
+          ]}
+        >
+          {summary.status === "DUE" ? (
             <>
               <Text style={styles.dueLabel}>DUE BALANCE</Text>
               <Text style={styles.dueAmountDanger}>
                 {formatINR(summary.remainingDue)}
               </Text>
               <Text style={styles.dueSubText}>
-                Purchases: {formatINR(summary.totalPurchases)} · Paid: {formatINR(summary.totalPaid)}
+                Purchases: {formatINR(summary.totalPurchases)} · Paid:{" "}
+                {formatINR(summary.totalPaid)}
               </Text>
             </>
-          ) : summary.status === 'SETTLED' ? (
+          ) : summary.status === "SETTLED" ? (
             <>
               <Text style={styles.settledLabel}>BALANCE CLEARED</Text>
-              <Text style={styles.dueAmountSettled}>
-                ₹0 Due
-              </Text>
+              <Text style={styles.dueAmountSettled}>₹0 Due</Text>
               <Text style={styles.dueSubText}>
                 All {formatINR(summary.totalPurchases)} paid in full
               </Text>
             </>
-          ) : summary.status === 'ADVANCE' ? (
+          ) : summary.status === "ADVANCE" ? (
             <>
               <Text style={styles.advanceLabel}>ADVANCE CREDIT</Text>
               <Text style={styles.dueAmountAdvance}>
@@ -162,16 +179,32 @@ export const VendorCard = React.memo(function VendorCard({
       </Pressable>
 
       {/* Column 3: Quick Action Area (Add Payment + View Chevron) */}
-      <View style={[styles.actionCol, isDesktop ? styles.desktopActionCol : styles.mobileActionCol]}>
+      <View
+        style={[
+          styles.actionCol,
+          isDesktop ? styles.desktopActionCol : styles.mobileActionCol,
+        ]}
+      >
         <Pressable
-          onPress={() => onOpenPaymentModal(summary.vendorId, summary.vendorName, summary.remainingDue)}
+          onPress={() =>
+            onOpenPaymentModal(
+              summary.vendorId,
+              summary.vendorName,
+              summary.remainingDue,
+            )
+          }
           style={({ pressed }) => [
             styles.addPaymentBtn,
             pressed && styles.addPaymentBtnPressed,
           ]}
           hitSlop={6}
         >
-          <Feather name="plus-circle" size={14} color={colors.textPrimary} style={styles.btnIcon} />
+          <Feather
+            name="plus-circle"
+            size={14}
+            color={colors.textPrimary}
+            style={styles.btnIcon}
+          />
           <Text style={styles.addPaymentText}>Add Payment</Text>
         </Pressable>
 
@@ -184,7 +217,11 @@ export const VendorCard = React.memo(function VendorCard({
           hitSlop={8}
         >
           <Text style={styles.viewVendorText}>View</Text>
-          <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+          <Feather
+            name="chevron-right"
+            size={16}
+            color={colors.textSecondary}
+          />
         </Pressable>
       </View>
     </View>
@@ -200,8 +237,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 12,
     marginBottom: 8,
-    overflow: 'hidden',
-    transitionDuration: '150ms',
+    overflow: "hidden",
   },
   rowContainerHovered: {
     borderColor: colors.information,
@@ -209,16 +245,16 @@ const styles = StyleSheet.create({
   },
   mainPressable: {
     padding: 14,
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   desktopMainPressable: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     flex: 1,
   },
   mobileMainPressable: {
-    flexDirection: 'column',
+    flexDirection: "column",
     gap: 8,
   },
   vendorInfoCol: {
@@ -226,21 +262,21 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   nameHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 4,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   vendorName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
     letterSpacing: -0.2,
   },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
@@ -253,19 +289,19 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.2,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
     gap: 12,
     marginTop: 2,
   },
   metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   metaText: {
@@ -282,56 +318,56 @@ const styles = StyleSheet.create({
   },
   desktopDueCol: {
     paddingHorizontal: 12,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   mobileDueCol: {
     marginTop: 6,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(36, 59, 81, 0.4)',
+    borderTopColor: "rgba(36, 59, 81, 0.4)",
   },
   dueLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.6,
     color: colors.danger,
     marginBottom: 1,
   },
   settledLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.6,
     color: colors.brandHighlight,
     marginBottom: 1,
   },
   advanceLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.6,
     color: colors.information,
     marginBottom: 1,
   },
   dueAmountDanger: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.danger,
     letterSpacing: -0.3,
   },
   dueAmountSettled: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.brandHighlight,
     letterSpacing: -0.3,
   },
   dueAmountAdvance: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.information,
     letterSpacing: -0.3,
   },
   dueAmountNeutral: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textMuted,
   },
   dueSubText: {
@@ -340,8 +376,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   actionCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   desktopActionCol: {
@@ -351,11 +387,11 @@ const styles = StyleSheet.create({
   mobileActionCol: {
     paddingHorizontal: 14,
     paddingBottom: 12,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   addPaymentBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.primaryButton,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -371,17 +407,17 @@ const styles = StyleSheet.create({
   },
   addPaymentText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.textPrimary,
   },
   viewVendorBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 7,
     borderRadius: 8,
     gap: 2,
-    backgroundColor: 'rgba(36, 59, 81, 0.5)',
+    backgroundColor: "rgba(36, 59, 81, 0.5)",
   },
   viewVendorBtnPressed: {
     backgroundColor: colors.hoverSurface,
@@ -389,6 +425,6 @@ const styles = StyleSheet.create({
   viewVendorText: {
     fontSize: 12,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

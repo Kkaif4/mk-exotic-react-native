@@ -52,63 +52,43 @@ export const CustomerDropdown = React.memo(function CustomerDropdown({
 
   return (
     <View style={styles.container}>
-      {/* Label indicating mandatory requirement */}
-      <View style={styles.labelRow}>
-        <Text style={styles.label}>
-          Customer Name <Text style={styles.mandatoryAsterisk}>* (Mandatory Filter)</Text>
-        </Text>
-        {selectedCustomer ? (
-          <Text style={styles.labelCountBadge}>
-            {selectedCount} {selectedCount === 1 ? 'bill' : 'bills'} in {selectedMonth}
-          </Text>
-        ) : null}
-      </View>
-
-      {/* Dropdown Trigger Button */}
+      {/* Inline Compact Dropdown Trigger */}
       <Pressable
         onPress={() => setIsOpen((prev) => !prev)}
         style={[styles.triggerBtn, isOpen && styles.triggerBtnOpen]}
       >
-        <View style={styles.triggerLeft}>
-          <Feather name="user" size={14} color={colors.information} />
-          {selectedCustomer ? (
-            <Text style={styles.selectedCustomerText} numberOfLines={1}>
-              {selectedCustomer}
-            </Text>
-          ) : (
-            <Text style={styles.placeholderText}>Select a customer...</Text>
-          )}
+        <Feather name="user" size={13} color={colors.information} />
+        <Text style={styles.customerLabel}>Customer:</Text>
+        <Text style={styles.selectedCustomerText} numberOfLines={1}>
+          {selectedCustomer || 'Select'}
+        </Text>
+        <View style={styles.activeBillPill}>
+          <Text style={styles.activeBillPillText}>{selectedCount} bills</Text>
         </View>
-
-        <View style={styles.triggerRight}>
-          <View style={styles.activeBillPill}>
-            <Text style={styles.activeBillPillText}>{selectedCount} bills</Text>
-          </View>
-          <Feather
-            name={isOpen ? 'chevron-up' : 'chevron-down'}
-            size={16}
-            color={colors.textSecondary}
-          />
-        </View>
+        <Feather
+          name={isOpen ? 'chevron-up' : 'chevron-down'}
+          size={14}
+          color={colors.textSecondary}
+        />
       </Pressable>
 
-      {/* Dropdown Menu & Search Input */}
+      {/* Dropdown Menu & Search Input (Floats right below) */}
       {isOpen && (
         <View style={styles.dropdownMenu}>
           {/* Search Input Box */}
           <View style={styles.searchBox}>
-            <Feather name="search" size={14} color={colors.textSecondary} style={styles.searchIcon} />
+            <Feather name="search" size={13} color={colors.textSecondary} style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search customer name..."
+              placeholder="Search customer..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
             />
             {searchQuery ? (
-              <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                <Feather name="x" size={13} color={colors.textSecondary} />
+              <Pressable onPress={() => setSearchQuery('')} hitSlop={6}>
+                <Feather name="x" size={12} color={colors.textSecondary} />
               </Pressable>
             ) : null}
           </View>
@@ -160,7 +140,7 @@ export const CustomerDropdown = React.memo(function CustomerDropdown({
                         {count} {count === 1 ? 'bill' : 'bills'}
                       </Text>
                       {isSelected && (
-                        <Feather name="check" size={13} color={colors.brandHighlight} />
+                        <Feather name="check" size={12} color={colors.brandHighlight} />
                       )}
                     </View>
                   </Pressable>
@@ -177,94 +157,65 @@ export const CustomerDropdown = React.memo(function CustomerDropdown({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    zIndex: 20,
-    marginBottom: 10,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  mandatoryAsterisk: {
-    color: colors.danger,
-    fontWeight: '700',
-    textTransform: 'none',
-  },
-  labelCountBadge: {
-    fontSize: 11,
-    color: colors.information,
-    fontWeight: '600',
-    fontFamily: 'monospace',
+    zIndex: 100,
   },
   triggerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+    gap: 6,
   },
   triggerBtnOpen: {
     borderColor: colors.information,
     backgroundColor: colors.elevatedSurface,
   },
-  triggerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
+  customerLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   selectedCustomerText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: colors.textMuted,
-  },
-  triggerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    maxWidth: 130,
   },
   activeBillPill: {
     backgroundColor: 'rgba(57, 124, 194, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: 'rgba(57, 124, 194, 0.3)',
   },
   activeBillPillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.information,
     fontFamily: 'monospace',
   },
   dropdownMenu: {
+    position: 'absolute',
+    top: 42,
+    left: 0,
+    minWidth: 260,
     backgroundColor: colors.elevatedSurface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 10,
-    marginTop: 4,
-    padding: 8,
+    padding: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 9999,
   },
   searchBox: {
     flexDirection: 'row',
@@ -272,9 +223,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.appBackground,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    height: 32,
     marginBottom: 6,
   },
   searchIcon: {
@@ -283,8 +234,10 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     padding: 0,
+    // @ts-ignore
+    outlineStyle: 'none',
   },
   optionsList: {
     maxHeight: 200,
@@ -293,8 +246,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
     borderRadius: 6,
   },
   optionItemSelected: {
@@ -306,7 +259,7 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
     flex: 1,
   },
   optionDot: {
@@ -319,7 +272,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brandHighlight,
   },
   optionText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textPrimary,
     fontWeight: '500',
   },
@@ -330,7 +283,7 @@ const styles = StyleSheet.create({
   optionRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   optionBillCount: {
     fontSize: 11,
@@ -338,7 +291,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   emptyOption: {
-    padding: 14,
+    padding: 12,
     alignItems: 'center',
   },
   emptyOptionText: {
