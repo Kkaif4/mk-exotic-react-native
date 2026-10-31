@@ -73,3 +73,12 @@
 - [x] Modernize PDF Statements (`src/core/pdf.ts`) matching `sample_pdf.ts` industrial A4 accounting layout (margins, company metadata, alternating zebra rows, total borders, and standard footers)
 - [x] All 6 test suites with 28 tests passing cleanly with 100% green
 
+## Phase 9: Row-Level Vendor List, Vendor View Timeline Filtering & Mandatory Searchable Customer Dropdown
+- [x] Redesign vendor component (`VendorCard.tsx` / `VendorRow`) to high-density row level UI with bold due balances, status dots, and quick action `Add Payment` button
+- [x] Click vendor row to navigate to `VendorDetailScreen` for full operations (itemized transactions, month breakdown bar, audit timeline filters: All / Bills / Payments, contact editing, PDF export)
+- [x] Implement mandatory searchable Customer Dropdown filter (`src/components/customer/CustomerDropdown.tsx`) with instant typeahead search, active selection badges, and bill counts per customer
+- [x] Auto-select default customer name on mount and updates
+- [x] Display real-time filter result counter banner (`Showing X bills for [Customer] in [YYYY-MM]`) with settlement status badge
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+

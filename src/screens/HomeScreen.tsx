@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { BillForm } from "../components/forms/BillForm";
 import { VendorCard } from "../components/vendor/VendorCard";
 import { PaymentModal } from "../components/forms/PaymentModal";
 import { CustomerLedgerCard } from "../components/customer/CustomerLedgerCard";
+import { CustomerDropdown } from "../components/customer/CustomerDropdown";
+import { Badge } from "../components/common/Badge";
 import {
   getUniqueEntityNames,
   calculateCustomerMonthSummary,
@@ -52,11 +54,16 @@ export function HomeScreen({
     refreshVendors,
   } = useVendors(bills);
 
-  const [activeTab, setActiveTab] = useState<'vendors' | 'customers'>('vendors');
-  const [vendorStatusFilter, setVendorStatusFilter] = useState<'ALL' | 'DUE' | 'SETTLED' | 'ADVANCE'>('ALL');
+  const [activeTab, setActiveTab] = useState<"vendors" | "customers">(
+    "vendors",
+  );
+  const [vendorStatusFilter, setVendorStatusFilter] = useState<
+    "ALL" | "DUE" | "SETTLED" | "ADVANCE"
+  >("ALL");
   const [selectedMonth, setSelectedMonth] = useState(() =>
     new Date().toISOString().substring(0, 7),
   );
+  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [backupStatus, setBackupStatus] = useState<string | null>(null);
@@ -80,6 +87,30 @@ export function HomeScreen({
     () => getUniqueEntityNames(bills, vendors),
     [bills, vendors],
   );
+
+  // Mandatory Customer Filter: auto-select default customer name when customers exist
+  useEffect(() => {
+    if (entityNames.customers.length > 0) {
+      if (!selectedCustomer || !entityNames.customers.includes(selectedCustomer)) {
+        setSelectedCustomer(entityNames.customers[0]);
+      }
+    } else {
+      setSelectedCustomer("");
+    }
+  }, [entityNames.customers, selectedCustomer]);
+
+  // Selected customer monthly ledger summary
+  const selectedCustomerSummary = useMemo(() => {
+    if (!selectedCustomer) return null;
+    return calculateCustomerMonthSummary(
+      selectedCustomer,
+      selectedMonth,
+      bills,
+      settlements,
+    );
+  }, [selectedCustomer, selectedMonth, bills, settlements]);
+
+  const showingBillsCount = selectedCustomerSummary?.bills.length || 0;
 
   // Overall Statistics
   const stats = useMemo(() => {
@@ -248,16 +279,16 @@ export function HomeScreen({
   const vendorCounts = useMemo(() => {
     return {
       all: vendorSummaries.length,
-      due: vendorSummaries.filter((v) => v.status === 'DUE').length,
-      settled: vendorSummaries.filter((v) => v.status === 'SETTLED').length,
-      advance: vendorSummaries.filter((v) => v.status === 'ADVANCE').length,
+      due: vendorSummaries.filter((v) => v.status === "DUE").length,
+      settled: vendorSummaries.filter((v) => v.status === "SETTLED").length,
+      advance: vendorSummaries.filter((v) => v.status === "ADVANCE").length,
     };
   }, [vendorSummaries]);
 
   // Filtered lists based on search & status filter
   const filteredVendors = useMemo(() => {
     let list = vendorSummaries;
-    if (vendorStatusFilter !== 'ALL') {
+    if (vendorStatusFilter !== "ALL") {
       list = list.filter((v) => v.status === vendorStatusFilter);
     }
     if (!searchQuery.trim()) return list;
@@ -482,21 +513,21 @@ export function HomeScreen({
       </View>
 
       {/* Tab 1: Vendors (Lifetime Due — NO MONTH FILTER) */}
-      {activeTab === 'vendors' && (
+      {activeTab === "vendors" && (
         <View style={styles.listContainer}>
           {/* Status Filter Chips */}
           <View style={styles.statusFilterRow}>
             <Pressable
-              onPress={() => setVendorStatusFilter('ALL')}
+              onPress={() => setVendorStatusFilter("ALL")}
               style={[
                 styles.filterChip,
-                vendorStatusFilter === 'ALL' && styles.filterChipActive,
+                vendorStatusFilter === "ALL" && styles.filterChipActive,
               ]}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  vendorStatusFilter === 'ALL' && styles.filterChipTextActive,
+                  vendorStatusFilter === "ALL" && styles.filterChipTextActive,
                 ]}
               >
                 All ({vendorCounts.all})
@@ -504,17 +535,19 @@ export function HomeScreen({
             </Pressable>
 
             <Pressable
-              onPress={() => setVendorStatusFilter('DUE')}
+              onPress={() => setVendorStatusFilter("DUE")}
               style={[
                 styles.filterChip,
-                vendorStatusFilter === 'DUE' && styles.filterChipDueActive,
+                vendorStatusFilter === "DUE" && styles.filterChipDueActive,
               ]}
             >
-              <View style={[styles.filterDot, { backgroundColor: colors.danger }]} />
+              <View
+                style={[styles.filterDot, { backgroundColor: colors.danger }]}
+              />
               <Text
                 style={[
                   styles.filterChipText,
-                  vendorStatusFilter === 'DUE' && styles.filterChipTextActive,
+                  vendorStatusFilter === "DUE" && styles.filterChipTextActive,
                 ]}
               >
                 Due Pending ({vendorCounts.due})
@@ -522,38 +555,27 @@ export function HomeScreen({
             </Pressable>
 
             <Pressable
-              onPress={() => setVendorStatusFilter('SETTLED')}
+              onPress={() => setVendorStatusFilter("SETTLED")}
               style={[
                 styles.filterChip,
-                vendorStatusFilter === 'SETTLED' && styles.filterChipSettledActive,
+                vendorStatusFilter === "SETTLED" &&
+                  styles.filterChipSettledActive,
               ]}
             >
-              <View style={[styles.filterDot, { backgroundColor: colors.brandHighlight }]} />
+              <View
+                style={[
+                  styles.filterDot,
+                  { backgroundColor: colors.brandHighlight },
+                ]}
+              />
               <Text
                 style={[
                   styles.filterChipText,
-                  vendorStatusFilter === 'SETTLED' && styles.filterChipTextActive,
+                  vendorStatusFilter === "SETTLED" &&
+                    styles.filterChipTextActive,
                 ]}
               >
                 Settled ({vendorCounts.settled})
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setVendorStatusFilter('ADVANCE')}
-              style={[
-                styles.filterChip,
-                vendorStatusFilter === 'ADVANCE' && styles.filterChipAdvanceActive,
-              ]}
-            >
-              <View style={[styles.filterDot, { backgroundColor: colors.information }]} />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  vendorStatusFilter === 'ADVANCE' && styles.filterChipTextActive,
-                ]}
-              >
-                Advance ({vendorCounts.advance})
               </Text>
             </Pressable>
           </View>
@@ -567,26 +589,41 @@ export function HomeScreen({
               </Text>
             </View>
           ) : (
-            filteredVendors.map((summary) => {
-              const vendorData = vendors.find(
-                (v) =>
-                  v.id === summary.vendorId ||
-                  v.name.toLowerCase() === summary.vendorName.toLowerCase(),
-              );
-              return (
-                <VendorCard
-                  key={summary.vendorId || summary.vendorName}
-                  summary={summary}
-                  contactNumber={vendorData?.contactNumber}
-                  notes={vendorData?.notes}
-                  onSelectVendor={onNavigateToVendor}
-                  onOpenPaymentModal={handleOpenPayment}
-                  onDownloadPDF={handleDownloadVendorPDF}
-                  onDeleteBill={handleDeleteBill}
-                  onDeletePayment={handleDeletePayment}
-                />
-              );
-            })
+            <View style={styles.vendorTableWrapper}>
+              {isDesktop && (
+                <View style={styles.vendorTableHeader}>
+                  <Text style={[styles.vendorTableHeaderText, { flex: 1.6 }]}>
+                    VENDOR & CONTACT
+                  </Text>
+                  <Text style={[styles.vendorTableHeaderText, { flex: 1.2, paddingHorizontal: 12 }]}>
+                    LIFETIME DUE BALANCE
+                  </Text>
+                  <Text style={[styles.vendorTableHeaderText, { width: 175, textAlign: 'right', paddingRight: 14 }]}>
+                    QUICK ACTIONS
+                  </Text>
+                </View>
+              )}
+              {filteredVendors.map((summary) => {
+                const vendorData = vendors.find(
+                  (v) =>
+                    v.id === summary.vendorId ||
+                    v.name.toLowerCase() === summary.vendorName.toLowerCase(),
+                );
+                return (
+                  <VendorCard
+                    key={summary.vendorId || summary.vendorName}
+                    summary={summary}
+                    contactNumber={vendorData?.contactNumber}
+                    notes={vendorData?.notes}
+                    onSelectVendor={onNavigateToVendor}
+                    onOpenPaymentModal={handleOpenPayment}
+                    onDownloadPDF={handleDownloadVendorPDF}
+                    onDeleteBill={handleDeleteBill}
+                    onDeletePayment={handleDeletePayment}
+                  />
+                );
+              })}
+            </View>
           )}
         </View>
       )}
@@ -594,47 +631,78 @@ export function HomeScreen({
       {/* Tab 2: Customers (Monthly Settlement View) */}
       {activeTab === "customers" && (
         <View style={styles.listContainer}>
-          {/* Month Selector Strip */}
-          <View style={styles.monthSelectorBar}>
-            <Text style={styles.monthSelectLabel}>Month Filter:</Text>
-            <TextInput
-              style={styles.monthInput}
-              value={selectedMonth}
-              onChangeText={setSelectedMonth}
-              placeholder="YYYY-MM"
-              placeholderTextColor={colors.textMuted}
+          {/* Customer Filter Controls: Mandatory Searchable Dropdown & Month Filter */}
+          <View style={styles.customerFilterControls}>
+            <CustomerDropdown
+              customers={entityNames.customers}
+              selectedCustomer={selectedCustomer}
+              onSelectCustomer={setSelectedCustomer}
+              bills={bills}
+              selectedMonth={selectedMonth}
             />
-            <Text style={styles.monthNotice}>
-              Showing all customer sales for {selectedMonth}
-            </Text>
+
+            {/* Month Selector Strip */}
+            <View style={styles.monthSelectorBar}>
+              <View style={styles.monthSelectorHeader}>
+                <Feather name="calendar" size={13} color={colors.information} />
+                <Text style={styles.monthSelectLabel}>Month Filter:</Text>
+              </View>
+              <TextInput
+                style={styles.monthInput}
+                value={selectedMonth}
+                onChangeText={setSelectedMonth}
+                placeholder="YYYY-MM"
+                placeholderTextColor={colors.textMuted}
+              />
+              <Text style={styles.monthNotice}>
+                Showing customer bills for {selectedMonth}
+              </Text>
+            </View>
           </View>
 
-          {filteredCustomers.length === 0 ? (
+          {/* Filter Result Counter Banner */}
+          {selectedCustomer ? (
+            <View style={styles.filterResultBanner}>
+              <View style={styles.filterResultLeft}>
+                <Feather name="layers" size={14} color={colors.information} />
+                <Text style={styles.filterResultText}>
+                  Showing <Text style={styles.filterResultBold}>{showingBillsCount}</Text> {showingBillsCount === 1 ? "bill" : "bills"} for{" "}
+                  <Text style={styles.filterResultName}>{selectedCustomer}</Text> in{" "}
+                  <Text style={styles.filterResultMonth}>{selectedMonth}</Text>
+                </Text>
+              </View>
+              {selectedCustomerSummary && (
+                <Badge
+                  label={
+                    selectedCustomerSummary.status === "PAID"
+                      ? "MONTH PAID"
+                      : "DUE PENDING"
+                  }
+                  variant={
+                    selectedCustomerSummary.status === "PAID"
+                      ? "settled"
+                      : "due"
+                  }
+                />
+              )}
+            </View>
+          ) : null}
+
+          {/* Render Result Customer Card or Empty State */}
+          {!selectedCustomer ? (
             <View style={styles.emptyCard}>
-              <Feather name="inbox" size={32} color={colors.textMuted} />
+              <Feather name="users" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>
-                {searchQuery
-                  ? `No customers found matching "${searchQuery}".`
-                  : "No customer sales recorded yet."}
+                No customer sales recorded yet. Add a customer sale bill in the left panel to begin.
               </Text>
             </View>
           ) : (
-            filteredCustomers.map((custName) => {
-              const summary = calculateCustomerMonthSummary(
-                custName,
-                selectedMonth,
-                bills,
-                settlements,
-              );
-              return (
-                <CustomerLedgerCard
-                  key={custName}
-                  summary={summary}
-                  onToggleSettlement={handleToggleSettlement}
-                  onDeleteBill={handleDeleteBill}
-                />
-              );
-            })
+            <CustomerLedgerCard
+              key={`${selectedCustomer}-${selectedMonth}`}
+              summary={selectedCustomerSummary!}
+              onToggleSettlement={handleToggleSettlement}
+              onDeleteBill={handleDeleteBill}
+            />
           )}
         </View>
       )}
@@ -922,6 +990,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.hoverSurface,
     borderRadius: 10,
   },
+  customerFilterControls: {
+    marginBottom: 6,
+  },
   monthSelectorBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -933,10 +1004,16 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 10,
   },
+  monthSelectorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
   monthSelectLabel: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: "600",
+    fontWeight: "700",
+    textTransform: "uppercase",
   },
   monthInput: {
     backgroundColor: colors.appBackground,
@@ -957,18 +1034,80 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     flex: 1,
   },
+  filterResultBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(23, 45, 68, 0.7)",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  filterResultLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  filterResultText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  filterResultBold: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.textPrimary,
+    fontFamily: "monospace",
+  },
+  filterResultName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.brandHighlight,
+  },
+  filterResultMonth: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.information,
+    fontFamily: "monospace",
+  },
   listContainer: {
     marginTop: 2,
   },
+  vendorTableWrapper: {
+    width: "100%",
+  },
+  vendorTableHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginBottom: 6,
+    backgroundColor: "rgba(16, 36, 58, 0.6)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  vendorTableHeaderText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    color: colors.textSecondary,
+    textTransform: "uppercase",
+  },
   statusFilterRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     marginBottom: 10,
   },
   filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 8,
@@ -981,15 +1120,15 @@ const styles = StyleSheet.create({
     borderColor: colors.information,
   },
   filterChipDueActive: {
-    backgroundColor: 'rgba(217, 74, 80, 0.15)',
+    backgroundColor: "rgba(217, 74, 80, 0.15)",
     borderColor: colors.danger,
   },
   filterChipSettledActive: {
-    backgroundColor: 'rgba(38, 148, 91, 0.15)',
+    backgroundColor: "rgba(38, 148, 91, 0.15)",
     borderColor: colors.brandHighlight,
   },
   filterChipAdvanceActive: {
-    backgroundColor: 'rgba(57, 124, 194, 0.15)',
+    backgroundColor: "rgba(57, 124, 194, 0.15)",
     borderColor: colors.information,
   },
   filterDot: {
@@ -1001,11 +1140,11 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   filterChipTextActive: {
     color: colors.textPrimary,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   emptyCard: {
     backgroundColor: colors.surface,

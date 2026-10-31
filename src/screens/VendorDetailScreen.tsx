@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,17 @@ export function VendorDetailScreen({
   const [contactInput, setContactInput] = useState(vendor?.contactNumber || '');
   const [notesInput, setNotesInput] = useState(vendor?.notes || '');
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [timelineFilter, setTimelineFilter] = useState<'all' | 'bills' | 'payments'>('all');
+
+  const displayedTimeline = useMemo(() => {
+    if (timelineFilter === 'bills') {
+      return auditTimeline.filter((item) => item.type === 'bill');
+    }
+    if (timelineFilter === 'payments') {
+      return auditTimeline.filter((item) => item.type === 'payment');
+    }
+    return auditTimeline;
+  }, [auditTimeline, timelineFilter]);
 
   const handleSaveVendorInfo = async () => {
     await updateVendorDetails({
@@ -219,6 +230,23 @@ export function VendorDetailScreen({
           </View>
         </View>
 
+        {/* Monthly Breakdown Strip */}
+        <View style={styles.monthBreakdownBar}>
+          <View style={styles.monthCol}>
+            <Text style={styles.monthLabel}>This Month Purchases:</Text>
+            <Text style={styles.monthValueWhite}>
+              {formatINR(financialSummary.thisMonthPurchases || 0)}
+            </Text>
+          </View>
+          <View style={styles.monthDivider} />
+          <View style={styles.monthCol}>
+            <Text style={styles.monthLabel}>This Month Paid:</Text>
+            <Text style={styles.monthValueGreen}>
+              {formatINR(financialSummary.thisMonthPaid || 0)}
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.buttonActionRow}>
           <Button
             title={isDownloadingPDF ? 'Exporting PDF...' : 'Download Statement (PDF)'}
@@ -261,14 +289,70 @@ export function VendorDetailScreen({
           <View style={styles.desktopLayout}>
             <View style={styles.desktopLeft}>{leftColumnContent}</View>
             <View style={styles.desktopRight}>
-              <View style={styles.timelineHeader}>
-                <Feather name="clock" size={15} color={colors.information} />
-                <Text style={styles.timelineTitle}>
-                  Chronological Audit Timeline ({auditTimeline.length})
-                </Text>
+              <View style={styles.timelineHeaderRow}>
+                <View style={styles.timelineTitleGroup}>
+                  <Feather name="clock" size={15} color={colors.information} />
+                  <Text style={styles.timelineTitle}>
+                    Audit Timeline ({displayedTimeline.length})
+                  </Text>
+                </View>
+
+                <View style={styles.timelineFilterGroup}>
+                  <Pressable
+                    onPress={() => setTimelineFilter('all')}
+                    style={[
+                      styles.timelineFilterBtn,
+                      timelineFilter === 'all' && styles.timelineFilterBtnActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.timelineFilterText,
+                        timelineFilter === 'all' && styles.timelineFilterTextActive,
+                      ]}
+                    >
+                      All ({auditTimeline.length})
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setTimelineFilter('bills')}
+                    style={[
+                      styles.timelineFilterBtn,
+                      timelineFilter === 'bills' && styles.timelineFilterBtnActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.timelineFilterText,
+                        timelineFilter === 'bills' && styles.timelineFilterTextActive,
+                      ]}
+                    >
+                      Bills ({financialSummary.billCount})
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setTimelineFilter('payments')}
+                    style={[
+                      styles.timelineFilterBtn,
+                      timelineFilter === 'payments' && styles.timelineFilterBtnActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.timelineFilterText,
+                        timelineFilter === 'payments' && styles.timelineFilterTextActive,
+                      ]}
+                    >
+                      Payments ({financialSummary.paymentCount})
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
+
               <VendorLedgerTimeline
-                timeline={auditTimeline}
+                timeline={displayedTimeline}
                 onDeleteBill={deleteBill}
                 onDeletePayment={deletePayment}
               />
@@ -277,14 +361,70 @@ export function VendorDetailScreen({
         ) : (
           <View style={styles.mobileLayout}>
             {leftColumnContent}
-            <View style={styles.timelineHeader}>
-              <Feather name="clock" size={15} color={colors.information} />
-              <Text style={styles.timelineTitle}>
-                Chronological Audit Timeline ({auditTimeline.length})
-              </Text>
+            <View style={styles.timelineHeaderRow}>
+              <View style={styles.timelineTitleGroup}>
+                <Feather name="clock" size={15} color={colors.information} />
+                <Text style={styles.timelineTitle}>
+                  Audit Timeline ({displayedTimeline.length})
+                </Text>
+              </View>
+
+              <View style={styles.timelineFilterGroup}>
+                <Pressable
+                  onPress={() => setTimelineFilter('all')}
+                  style={[
+                    styles.timelineFilterBtn,
+                    timelineFilter === 'all' && styles.timelineFilterBtnActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.timelineFilterText,
+                      timelineFilter === 'all' && styles.timelineFilterTextActive,
+                    ]}
+                  >
+                    All ({auditTimeline.length})
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setTimelineFilter('bills')}
+                  style={[
+                    styles.timelineFilterBtn,
+                    timelineFilter === 'bills' && styles.timelineFilterBtnActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.timelineFilterText,
+                      timelineFilter === 'bills' && styles.timelineFilterTextActive,
+                    ]}
+                  >
+                    Bills ({financialSummary.billCount})
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setTimelineFilter('payments')}
+                  style={[
+                    styles.timelineFilterBtn,
+                    timelineFilter === 'payments' && styles.timelineFilterBtnActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.timelineFilterText,
+                      timelineFilter === 'payments' && styles.timelineFilterTextActive,
+                    ]}
+                  >
+                    Payments ({financialSummary.paymentCount})
+                  </Text>
+                </Pressable>
+              </View>
             </View>
+
             <VendorLedgerTimeline
-              timeline={auditTimeline}
+              timeline={displayedTimeline}
               onDeleteBill={deleteBill}
               onDeletePayment={deletePayment}
             />
@@ -522,6 +662,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  monthBreakdownBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.elevatedSurface,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
+  monthCol: {
+    flex: 1,
+  },
+  monthLabel: {
+    fontSize: 9,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  monthValueWhite: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: 2,
+    fontFamily: 'monospace',
+  },
+  monthValueGreen: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.brandHighlight,
+    marginTop: 2,
+    fontFamily: 'monospace',
+  },
+  monthDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: colors.border,
+    marginHorizontal: 8,
+  },
   pdfBtn: {
     flex: 1,
     paddingVertical: 9,
@@ -530,16 +710,50 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 9,
   },
-  timelineHeader: {
+  timelineHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 4,
     marginBottom: 10,
+  },
+  timelineTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   timelineTitle: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  timelineFilterGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 2,
+    gap: 2,
+  },
+  timelineFilterBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  timelineFilterBtnActive: {
+    backgroundColor: colors.elevatedSurface,
+  },
+  timelineFilterText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  timelineFilterTextActive: {
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
 });

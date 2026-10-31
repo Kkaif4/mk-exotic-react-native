@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Card } from '../common/Card';
-import { Badge } from '../common/Badge';
-import { Button } from '../common/Button';
 import { VendorFinancialSummary } from '../../core/types';
 import { formatINR } from '../../core/math';
 import { colors } from '../../core/theme';
-import { confirmDelete } from '../../core/confirm';
 
-interface VendorCardProps {
+export interface VendorCardProps {
   summary: VendorFinancialSummary;
   contactNumber?: string;
   notes?: string;
@@ -26,542 +22,373 @@ export const VendorCard = React.memo(function VendorCard({
   notes,
   onSelectVendor,
   onOpenPaymentModal,
-  onDownloadPDF,
-  onDeleteBill,
-  onDeletePayment,
 }: VendorCardProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'bills' | 'payments'>('bills');
-  const [expanded, setExpanded] = useState(true);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const [isHovered, setIsHovered] = useState(false);
 
-  const getBadgeVariant = (status: VendorFinancialSummary['status']) => {
-    switch (status) {
+  const getStatusBadge = () => {
+    switch (summary.status) {
       case 'DUE':
-        return 'due';
+        return {
+          label: 'Due Pending',
+          dotColor: colors.danger,
+          bg: 'rgba(217, 74, 80, 0.12)',
+          text: colors.danger,
+        };
       case 'SETTLED':
-        return 'settled';
+        return {
+          label: 'Settled',
+          dotColor: colors.brandHighlight,
+          bg: 'rgba(117, 184, 61, 0.12)',
+          text: colors.brandHighlight,
+        };
       case 'ADVANCE':
-        return 'advance';
+        return {
+          label: 'Advance',
+          dotColor: colors.information,
+          bg: 'rgba(57, 124, 194, 0.12)',
+          text: colors.information,
+        };
       default:
-        return 'neutral';
+        return {
+          label: 'No Bills',
+          dotColor: colors.textMuted,
+          bg: 'rgba(116, 141, 164, 0.12)',
+          text: colors.textSecondary,
+        };
     }
   };
 
-  const bills = summary.bills || [];
-  const payments = summary.payments || [];
+  const badge = getStatusBadge();
 
   return (
-    <Card style={styles.card}>
-      {/* Header Info */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => onSelectVendor(summary.vendorId, summary.vendorName)}
-          style={styles.nameBlock}
-        >
-          <Text style={styles.name}>{summary.vendorName}</Text>
-          {contactNumber ? (
-            <View style={styles.metaRow}>
-              <Feather name="phone" size={11} color={colors.textSecondary} />
-              <Text style={styles.metaText}>{contactNumber}</Text>
-            </View>
-          ) : null}
-          {notes ? (
-            <Text style={styles.notesText} numberOfLines={1}>
-              {notes}
+    <View
+      style={[
+        styles.rowContainer,
+        isHovered && styles.rowContainerHovered,
+      ]}
+      // @ts-ignore - web hover support
+      onMouseEnter={() => setIsHovered(true)}
+      // @ts-ignore - web hover support
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Clickable Entity & Financial Info Area */}
+      <Pressable
+        onPress={() => onSelectVendor(summary.vendorId, summary.vendorName)}
+        style={[
+          styles.mainPressable,
+          isDesktop ? styles.desktopMainPressable : styles.mobileMainPressable,
+        ]}
+      >
+        {/* Column 1: Vendor Name & Contact Meta */}
+        <View style={styles.vendorInfoCol}>
+          <View style={styles.nameHeaderRow}>
+            <Text style={styles.vendorName} numberOfLines={1}>
+              {summary.vendorName}
             </Text>
-          ) : null}
+            <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
+              <View style={[styles.statusDot, { backgroundColor: badge.dotColor }]} />
+              <Text style={[styles.statusText, { color: badge.text }]}>
+                {badge.label}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.metaRow}>
+            {contactNumber ? (
+              <View style={styles.metaItem}>
+                <Feather name="phone" size={11} color={colors.textSecondary} />
+                <Text style={styles.metaText}>{contactNumber}</Text>
+              </View>
+            ) : null}
+            <View style={styles.metaItem}>
+              <Feather name="file-text" size={11} color={colors.textSecondary} />
+              <Text style={styles.metaText}>
+                {summary.billCount} bills · {summary.paymentCount} payments
+              </Text>
+            </View>
+            {notes ? (
+              <View style={styles.metaItem}>
+                <Feather name="info" size={11} color={colors.textMuted} />
+                <Text style={styles.notesText} numberOfLines={1}>
+                  {notes}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        {/* Column 2: Due Balance & Lifetime Summary */}
+        <View style={[styles.dueInfoCol, isDesktop ? styles.desktopDueCol : styles.mobileDueCol]}>
+          {summary.status === 'DUE' ? (
+            <>
+              <Text style={styles.dueLabel}>DUE BALANCE</Text>
+              <Text style={styles.dueAmountDanger}>
+                {formatINR(summary.remainingDue)}
+              </Text>
+              <Text style={styles.dueSubText}>
+                Purchases: {formatINR(summary.totalPurchases)} · Paid: {formatINR(summary.totalPaid)}
+              </Text>
+            </>
+          ) : summary.status === 'SETTLED' ? (
+            <>
+              <Text style={styles.settledLabel}>BALANCE CLEARED</Text>
+              <Text style={styles.dueAmountSettled}>
+                ₹0 Due
+              </Text>
+              <Text style={styles.dueSubText}>
+                All {formatINR(summary.totalPurchases)} paid in full
+              </Text>
+            </>
+          ) : summary.status === 'ADVANCE' ? (
+            <>
+              <Text style={styles.advanceLabel}>ADVANCE CREDIT</Text>
+              <Text style={styles.dueAmountAdvance}>
+                {formatINR(summary.advancePaid)} Adv
+              </Text>
+              <Text style={styles.dueSubText}>
+                Total Paid: {formatINR(summary.totalPaid)}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.dueLabel}>STATUS</Text>
+              <Text style={styles.dueAmountNeutral}>No Bills</Text>
+              <Text style={styles.dueSubText}>Zero transaction activity</Text>
+            </>
+          )}
+        </View>
+      </Pressable>
+
+      {/* Column 3: Quick Action Area (Add Payment + View Chevron) */}
+      <View style={[styles.actionCol, isDesktop ? styles.desktopActionCol : styles.mobileActionCol]}>
+        <Pressable
+          onPress={() => onOpenPaymentModal(summary.vendorId, summary.vendorName, summary.remainingDue)}
+          style={({ pressed }) => [
+            styles.addPaymentBtn,
+            pressed && styles.addPaymentBtnPressed,
+          ]}
+          hitSlop={6}
+        >
+          <Feather name="plus-circle" size={14} color={colors.textPrimary} style={styles.btnIcon} />
+          <Text style={styles.addPaymentText}>Add Payment</Text>
         </Pressable>
 
-        <Badge
-          label={summary.status === 'DUE' ? 'DUE PENDING' : summary.status}
-          variant={getBadgeVariant(summary.status)}
-        />
-      </View>
-
-      {/* 3-Stat Financial Strip (Lifetime) */}
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Purchases ({summary.billCount})</Text>
-          <Text style={styles.statValWhite}>{formatINR(summary.totalPurchases)}</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Paid ({summary.paymentCount})</Text>
-          <Text style={styles.statValGreen}>{formatINR(summary.totalPaid)}</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Remaining Due</Text>
-          <Text
-            style={[
-              styles.statValDue,
-              summary.remainingDue === 0 && styles.statValSettled,
-            ]}
-          >
-            {formatINR(summary.remainingDue)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Monthly Tracking Badge / Sub-Bar */}
-      <View style={styles.monthBreakdownBar}>
-        <View style={styles.monthCol}>
-          <Text style={styles.monthLabel}>This Month Purchases:</Text>
-          <Text style={styles.monthValueWhite}>
-            {formatINR(summary.thisMonthPurchases || 0)}
-          </Text>
-        </View>
-        <View style={styles.monthDivider} />
-        <View style={styles.monthCol}>
-          <Text style={styles.monthLabel}>This Month Paid:</Text>
-          <Text style={styles.monthValueGreen}>
-            {formatINR(summary.thisMonthPaid || 0)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Toggle to expand/collapse itemized records */}
-      <View style={styles.toggleRow}>
-        <View style={styles.subTabGroup}>
-          <Pressable
-            onPress={() => setActiveSubTab('bills')}
-            style={[styles.subTabBtn, activeSubTab === 'bills' && styles.subTabBtnActive]}
-          >
-            <Feather
-              name="file-text"
-              size={11}
-              color={activeSubTab === 'bills' ? colors.textPrimary : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.subTabText,
-                activeSubTab === 'bills' && styles.subTabTextActive,
-              ]}
-            >
-              Bills ({bills.length})
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setActiveSubTab('payments')}
-            style={[
-              styles.subTabBtn,
-              activeSubTab === 'payments' && styles.subTabBtnActive,
-            ]}
-          >
-            <Feather
-              name="credit-card"
-              size={11}
-              color={activeSubTab === 'payments' ? colors.brandHighlight : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.subTabText,
-                activeSubTab === 'payments' && styles.subTabTextActive,
-              ]}
-            >
-              Partial Payments ({payments.length})
-            </Text>
-          </Pressable>
-        </View>
-
         <Pressable
-          onPress={() => setExpanded(!expanded)}
+          onPress={() => onSelectVendor(summary.vendorId, summary.vendorName)}
+          style={({ pressed }) => [
+            styles.viewVendorBtn,
+            pressed && styles.viewVendorBtnPressed,
+          ]}
           hitSlop={8}
-          style={styles.expandToggle}
         >
-          <Feather
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.expandText}>{expanded ? 'Hide' : 'Show'}</Text>
+          <Text style={styles.viewVendorText}>View</Text>
+          <Feather name="chevron-right" size={16} color={colors.textSecondary} />
         </Pressable>
       </View>
-
-      {/* Itemized Lists (Bills / Payments) */}
-      {expanded && (
-        <View style={styles.recordsContainer}>
-          {activeSubTab === 'bills' && (
-            <View style={styles.recordsList}>
-              {bills.length === 0 ? (
-                <Text style={styles.emptyRecordsText}>
-                  No purchase bills recorded for this vendor.
-                </Text>
-              ) : (
-                bills.map((bill) => (
-                  <View key={bill.id} style={styles.recordRow}>
-                    <View style={styles.recordLeft}>
-                      <Text style={styles.recordDate}>{bill.date}</Text>
-                      {bill.billNumber ? (
-                        <Text style={styles.billBadge}>#{bill.billNumber}</Text>
-                      ) : null}
-                    </View>
-                    <View style={styles.recordRight}>
-                      <Text style={styles.recordAmountDebit}>
-                        + {formatINR(bill.amount)}
-                      </Text>
-                      {onDeleteBill ? (
-                        <Pressable
-                          onPress={() =>
-                            confirmDelete(
-                              'bill',
-                              () => onDeleteBill(bill.id),
-                              bill.billNumber ? `Bill #${bill.billNumber}` : `₹${formatINR(bill.amount)}`
-                            )
-                          }
-                          hitSlop={8}
-                          style={styles.deleteBtn}
-                        >
-                          <Feather name="trash-2" size={12} color={colors.danger} />
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </View>
-                ))
-              )}
-            </View>
-          )}
-
-          {activeSubTab === 'payments' && (
-            <View style={styles.recordsList}>
-              {payments.length === 0 ? (
-                <Text style={styles.emptyRecordsText}>
-                  No partial payments recorded for this vendor.
-                </Text>
-              ) : (
-                payments.map((p) => (
-                  <View key={p.id} style={styles.recordRow}>
-                    <View style={styles.recordLeft}>
-                      <Text style={styles.recordDate}>{p.date}</Text>
-                      <Text style={styles.paymentModeBadge}>{p.paymentMode}</Text>
-                      {p.referenceNote ? (
-                        <Text style={styles.noteSnippet} numberOfLines={1}>
-                          {p.referenceNote}
-                        </Text>
-                      ) : null}
-                    </View>
-                    <View style={styles.recordRight}>
-                      <Text style={styles.recordAmountCredit}>
-                        - {formatINR(p.amount)}
-                      </Text>
-                      {onDeletePayment ? (
-                        <Pressable
-                          onPress={() =>
-                            confirmDelete(
-                              'payment',
-                              () => onDeletePayment(p.id),
-                              `${p.paymentMode} - ₹${formatINR(p.amount)}`
-                            )
-                          }
-                          hitSlop={8}
-                          style={styles.deleteBtn}
-                        >
-                          <Feather name="trash-2" size={12} color={colors.danger} />
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </View>
-                ))
-              )}
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Footer Actions */}
-      <View style={styles.footerActions}>
-        <Button
-          title="Audit Ledger"
-          variant="secondary"
-          icon={<Feather name="clock" size={13} color={colors.textPrimary} />}
-          onPress={() => onSelectVendor(summary.vendorId, summary.vendorName)}
-          style={styles.actionBtn}
-        />
-        {onDownloadPDF ? (
-          <Button
-            title="PDF"
-            variant="secondary"
-            icon={<Feather name="file-text" size={13} color={colors.textPrimary} />}
-            onPress={() => onDownloadPDF(summary.vendorId, summary.vendorName)}
-            style={styles.actionBtnSmall}
-          />
-        ) : null}
-        <Button
-          title="Add Payment"
-          variant="primary"
-          icon={<Feather name="credit-card" size={13} color={colors.textPrimary} />}
-          onPress={() =>
-            onOpenPaymentModal(
-              summary.vendorId,
-              summary.vendorName,
-              summary.remainingDue
-            )
-          }
-          style={styles.actionBtn}
-        />
-      </View>
-    </Card>
+    </View>
   );
 });
 
+export const VendorRow = VendorCard;
+
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: 14,
+  rowContainer: {
     backgroundColor: colors.surface,
-    borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: 14,
+    borderColor: colors.border,
+    borderRadius: 12,
+    marginBottom: 8,
+    overflow: 'hidden',
+    transitionDuration: '150ms',
   },
-  header: {
+  rowContainerHovered: {
+    borderColor: colors.information,
+    backgroundColor: colors.elevatedSurface,
+  },
+  mainPressable: {
+    padding: 14,
+    cursor: 'pointer',
+  },
+  desktopMainPressable: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-    gap: 8,
-  },
-  nameBlock: {
     flex: 1,
   },
-  name: {
-    fontSize: 16,
+  mobileMainPressable: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  vendorInfoCol: {
+    flex: 1.6,
+    paddingRight: 12,
+  },
+  nameHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
+    flexWrap: 'wrap',
+  },
+  vendorName: {
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    gap: 5,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 2,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
-    marginTop: 3,
   },
   metaText: {
     fontSize: 12,
     color: colors.textSecondary,
-    fontWeight: '500',
   },
   notesText: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
-    marginTop: 2,
-    fontStyle: 'italic',
+    maxWidth: 160,
   },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.appBackground,
-    borderRadius: 10,
-    padding: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
+  dueInfoCol: {
+    flex: 1.2,
   },
-  statBox: {
-    flex: 1,
+  desktopDueCol: {
+    paddingHorizontal: 12,
+    alignItems: 'flex-start',
   },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  statValWhite: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: 2,
-    fontFamily: 'monospace',
-  },
-  statValGreen: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.brandHighlight,
-    marginTop: 2,
-    fontFamily: 'monospace',
-  },
-  statValDue: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.danger,
-    marginTop: 2,
-    fontFamily: 'monospace',
-  },
-  statValSettled: {
-    color: colors.brandHighlight,
-  },
-  monthBreakdownBar: {
-    flexDirection: 'row',
-    backgroundColor: colors.elevatedSurface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  monthCol: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  monthDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: colors.border,
-  },
-  monthLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  monthValueWhite: {
-    fontSize: 11,
-    color: colors.textPrimary,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  monthValueGreen: {
-    fontSize: 11,
-    color: colors.brandHighlight,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
+  mobileDueCol: {
+    marginTop: 6,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: 'rgba(36, 59, 81, 0.4)',
   },
-  subTabGroup: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  subTabBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: colors.appBackground,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  subTabBtnActive: {
-    borderColor: colors.information,
-    backgroundColor: 'rgba(57, 124, 194, 0.15)',
-  },
-  subTabText: {
+  dueLabel: {
     fontSize: 10,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  subTabTextActive: {
-    color: colors.textPrimary,
     fontWeight: '700',
+    letterSpacing: 0.6,
+    color: colors.danger,
+    marginBottom: 1,
   },
-  expandToggle: {
+  settledLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    color: colors.brandHighlight,
+    marginBottom: 1,
+  },
+  advanceLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    color: colors.information,
+    marginBottom: 1,
+  },
+  dueAmountDanger: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.danger,
+    letterSpacing: -0.3,
+  },
+  dueAmountSettled: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.brandHighlight,
+    letterSpacing: -0.3,
+  },
+  dueAmountAdvance: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.information,
+    letterSpacing: -0.3,
+  },
+  dueAmountNeutral: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  dueSubText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  actionCol: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    padding: 3,
+    gap: 8,
   },
-  expandText: {
-    fontSize: 11,
-    color: colors.textSecondary,
+  desktopActionCol: {
+    paddingRight: 14,
+    paddingLeft: 8,
   },
-  recordsContainer: {
-    marginTop: 8,
+  mobileActionCol: {
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    justifyContent: 'flex-end',
   },
-  recordsList: {
+  addPaymentBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryButton,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
     gap: 5,
   },
-  emptyRecordsText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontStyle: 'italic',
-    paddingVertical: 6,
-    textAlign: 'center',
+  addPaymentBtnPressed: {
+    backgroundColor: colors.buttonHover,
+    opacity: 0.9,
   },
-  recordRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.appBackground,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 7,
-    borderWidth: 1,
-    borderColor: colors.border,
+  btnIcon: {
+    marginRight: 1,
   },
-  recordLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-  },
-  recordDate: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontFamily: 'monospace',
-  },
-  billBadge: {
-    fontSize: 10,
-    color: colors.information,
-    backgroundColor: 'rgba(57, 124, 194, 0.15)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-    fontFamily: 'monospace',
-  },
-  paymentModeBadge: {
-    fontSize: 10,
-    color: colors.brandHighlight,
-    backgroundColor: 'rgba(117, 184, 61, 0.15)',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  noteSnippet: {
-    fontSize: 10,
-    color: colors.textMuted,
-    flex: 1,
-  },
-  recordRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  recordAmountDebit: {
+  addPaymentText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textPrimary,
-    fontFamily: 'monospace',
   },
-  recordAmountCredit: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.brandHighlight,
-    fontFamily: 'monospace',
-  },
-  deleteBtn: {
-    padding: 3,
-  },
-  footerActions: {
+  viewVendorBtn: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 10,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    borderRadius: 8,
+    gap: 2,
+    backgroundColor: 'rgba(36, 59, 81, 0.5)',
   },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 9,
+  viewVendorBtnPressed: {
+    backgroundColor: colors.hoverSurface,
   },
-  actionBtnSmall: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+  viewVendorText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
 });

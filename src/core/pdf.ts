@@ -255,7 +255,7 @@ export async function generateCustomerMonthlyPDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...BLACK);
-  doc.text('TOTAL MONTHLY DUE', M + 4, y + 6);
+  doc.text('TOTAL', M + 4, y + 6);
   doc.text(fmtCurrency(total), COL_AMT, y + 6, { align: 'right' });
 
   y += 8;
@@ -374,7 +374,7 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...DARK);
-  doc.text(contactNumber || 'Not specified', M + 22, y);
+  doc.text(contactNumber || '--', M + 22, y);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
@@ -390,7 +390,7 @@ export async function generateVendorLifetimeAuditPDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(...BLACK);
-  doc.text('Continuous Cumulative Ledger (No Month Filter)', M + 22, y);
+  doc.text('Continuous Cumulative Ledger', M + 22, y);
 
   y += 10;
 

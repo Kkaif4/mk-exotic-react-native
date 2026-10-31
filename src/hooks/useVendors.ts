@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Vendor, VendorFinancialSummary } from '../core/types';
+import { Bill, Vendor, VendorFinancialSummary } from '../core/types';
 import { defaultStorage } from '../storage/local-storage';
 import { useBills } from './useBills';
 import { calculateVendorFinancials } from '../core/ledger';
