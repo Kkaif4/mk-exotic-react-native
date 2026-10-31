@@ -175,7 +175,11 @@ export function calculateCustomerMonthSummary(
         b.entityName.trim().toLowerCase() === normName &&
         b.date.startsWith(monthStr)
     )
-    .sort((a, b) => a.date.localeCompare(b.date));
+    .sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) ||
+        (b.createdAt || '').localeCompare(a.createdAt || '')
+    );
 
   const totalDue = sumMoney(customerBills.map((b) => b.amount));
 

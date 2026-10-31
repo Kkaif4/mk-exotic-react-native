@@ -102,7 +102,11 @@ export async function generateCustomerMonthlyPDF(
   // INFO BLOCK — customer name, period, status, total
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const sortedBills = [...bills].sort((a, b) => a.date.localeCompare(b.date));
+  const sortedBills = [...bills].sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      (b.createdAt || '').localeCompare(a.createdAt || '')
+  );
   const total = sortedBills.reduce((s, b) => s + b.amount, 0);
 
   doc.setFont('helvetica', 'normal');

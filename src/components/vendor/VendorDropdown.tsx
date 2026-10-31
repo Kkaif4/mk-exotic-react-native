@@ -47,6 +47,14 @@ export const VendorDropdown = React.memo(function VendorDropdown({
     );
   }, [vendorSummaries, searchQuery]);
 
+  const handleSelectTop = () => {
+    if (filteredVendors.length > 0) {
+      onSelectVendor(filteredVendors[0].vendorId, filteredVendors[0].vendorName);
+      setIsOpen(false);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Inline Compact Dropdown Trigger */}
@@ -108,6 +116,8 @@ export const VendorDropdown = React.memo(function VendorDropdown({
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              returnKeyType="done"
+              onSubmitEditing={handleSelectTop}
               autoFocus
             />
             {searchQuery ? (

@@ -9,7 +9,9 @@ import {
   useWindowDimensions,
   TextInput,
   Alert,
+  Image,
 } from "react-native";
+import { styles } from "./HomeScreenStyle";
 import { Feather } from "@expo/vector-icons";
 import { useBills } from "../hooks/useBills";
 import { useVendors } from "../hooks/useVendors";
@@ -19,6 +21,7 @@ import { VendorDropdown } from "../components/vendor/VendorDropdown";
 import { PaymentModal } from "../components/forms/PaymentModal";
 import { CustomerLedgerCard } from "../components/customer/CustomerLedgerCard";
 import { CustomerDropdown } from "../components/customer/CustomerDropdown";
+import { MonthYearPicker } from "../components/common/MonthYearPicker";
 import { Badge } from "../components/common/Badge";
 import {
   getUniqueEntityNames,
@@ -27,6 +30,7 @@ import {
 } from "../core/ledger";
 import { formatINR, sumMoney } from "../core/math";
 import { defaultStorage } from "../storage/local-storage";
+import { showWarningPopup } from "../core/confirm";
 import { Card } from "../components/common/Card";
 import { Button } from "../components/common/Button";
 import {
@@ -56,10 +60,10 @@ export function HomeScreen({
   } = useVendors(bills);
 
   const [activeTab, setActiveTab] = useState<"vendors" | "customers">(
-    "vendors",
+    "customers",
   );
   const [vendorStatusFilter, setVendorStatusFilter] = useState<
-    "ALL" | "DUE" | "SETTLED" | "ADVANCE"
+    "ALL" | "DUE" | "SETTLED"
   >("ALL");
   const [selectedMonth, setSelectedMonth] = useState(() =>
     new Date().toISOString().substring(0, 7),
@@ -90,10 +94,24 @@ export function HomeScreen({
     [bills, vendors],
   );
 
+  // Extract all distinct years from recorded bills for the calendar picker
+  const availableYears = useMemo(() => {
+    const yrs = new Set<string>();
+    for (const b of bills) {
+      if (b.date && b.date.length >= 4) {
+        yrs.add(b.date.substring(0, 4));
+      }
+    }
+    return Array.from(yrs);
+  }, [bills]);
+
   // Mandatory Customer Filter: auto-select default customer name when customers exist
   useEffect(() => {
     if (entityNames.customers.length > 0) {
-      if (!selectedCustomer || !entityNames.customers.includes(selectedCustomer)) {
+      if (
+        !selectedCustomer ||
+        !entityNames.customers.includes(selectedCustomer)
+      ) {
         setSelectedCustomer(entityNames.customers[0]);
       }
     } else {
@@ -131,9 +149,7 @@ export function HomeScreen({
 
   const selectedVendorSummary = useMemo(() => {
     if (!selectedVendorId || selectedVendorId === "ALL") return null;
-    return (
-      vendorSummaries.find((v) => v.vendorId === selectedVendorId) || null
-    );
+    return vendorSummaries.find((v) => v.vendorId === selectedVendorId) || null;
   }, [vendorSummaries, selectedVendorId]);
 
   // Overall Statistics
@@ -299,6 +315,55 @@ export function HomeScreen({
     }
   };
 
+  const handleStartWipeAllData = () => {
+    // Confirmation Step 1 of 2: Styled warning dialog
+    showWarningPopup({
+      title: "Wipe All Data (1 of 2)",
+      message:
+        "Are you sure you want to permanently erase ALL data? This will delete all customer bills, vendor purchases, payment records, and registered parties from this device.\n\nThis action cannot be undone.",
+      confirmText: "Proceed to Final Step",
+      cancelText: "Cancel",
+      variant: "danger",
+      onConfirm: () => {
+        // Confirmation Step 2 of 2: Written confirmation requiring typing "DELETE"
+        setTimeout(() => {
+          showWarningPopup({
+            title: "Type DELETE to Confirm Wipeout (2 of 2)",
+            message:
+              "Final warning! All offline records will be destroyed immediately. To confirm permanent wipeout, please type DELETE below:",
+            confirmText: "Confirm Delete & Wipe Out Data",
+            cancelText: "Cancel",
+            variant: "danger",
+            requireWrittenConfirmation: true,
+            confirmationKeyword: "DELETE",
+            onConfirm: async () => {
+              try {
+                // ALWAYS export safety backup regardless before wiping out data
+                setBackupStatus("Exporting safety backup JSON before wipeout...");
+                try {
+                  await exportFullJSONBackup();
+                } catch (backupErr) {
+                  console.warn("Safety export notice:", backupErr);
+                }
+
+                await defaultStorage.clearAll();
+                await Promise.all([refreshBills(), refreshVendors()]);
+                setSelectedCustomer("");
+                setSelectedVendorId("ALL");
+                setBackupStatus(
+                  "Automatic safety backup downloaded & all data wiped out.",
+                );
+                setTimeout(() => setBackupStatus(null), 6000);
+              } catch (err: any) {
+                setBackupStatus(`Failed to clear data: ${err.message}`);
+              }
+            },
+          });
+        }, 150);
+      },
+    });
+  };
+
   // Vendor status breakdown counts
   const vendorCounts = useMemo(() => {
     return {
@@ -401,6 +466,13 @@ export function HomeScreen({
             onPress={handleExportCSV}
             style={styles.backupBtn}
           />
+          <Button
+            title="Wipe Out All Data"
+            variant="danger"
+            icon={<Feather name="trash-2" size={13} color="#FFFFFF" />}
+            onPress={handleStartWipeAllData}
+            style={styles.backupBtn}
+          />
         </View>
       </Card>
     </View>
@@ -454,27 +526,6 @@ export function HomeScreen({
         {/* Left: Compact Tab Switcher (Vendors / Customers) */}
         <View style={styles.toolbarSegmentControl}>
           <Pressable
-            onPress={() => setActiveTab("vendors")}
-            style={[
-              styles.toolbarSegmentBtn,
-              activeTab === "vendors" && styles.toolbarSegmentBtnActive,
-            ]}
-          >
-            <Feather
-              name="truck"
-              size={12}
-              color={activeTab === "vendors" ? colors.textPrimary : colors.textSecondary}
-            />
-            <Text
-              style={[
-                styles.toolbarSegmentText,
-                activeTab === "vendors" && styles.toolbarSegmentTextActive,
-              ]}
-            >
-              Vendors ({vendorSummaries.length})
-            </Text>
-          </Pressable>
-          <Pressable
             onPress={() => setActiveTab("customers")}
             style={[
               styles.toolbarSegmentBtn,
@@ -484,7 +535,9 @@ export function HomeScreen({
             <Feather
               name="users"
               size={12}
-              color={activeTab === "customers" ? colors.textPrimary : colors.textSecondary}
+              color={
+                activeTab === "customers" ? "#FFFFFF" : colors.textSecondary
+              }
             />
             <Text
               style={[
@@ -493,6 +546,27 @@ export function HomeScreen({
               ]}
             >
               Customers ({entityNames.customers.length})
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setActiveTab("vendors")}
+            style={[
+              styles.toolbarSegmentBtn,
+              activeTab === "vendors" && styles.toolbarSegmentBtnActive,
+            ]}
+          >
+            <Feather
+              name="truck"
+              size={12}
+              color={activeTab === "vendors" ? "#FFFFFF" : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.toolbarSegmentText,
+                activeTab === "vendors" && styles.toolbarSegmentTextActive,
+              ]}
+            >
+              Vendors ({vendorSummaries.length})
             </Text>
           </Pressable>
         </View>
@@ -516,7 +590,8 @@ export function HomeScreen({
                 <Text
                   style={[
                     styles.inlineStatusText,
-                    vendorStatusFilter === "ALL" && styles.inlineStatusTextActive,
+                    vendorStatusFilter === "ALL" &&
+                      styles.inlineStatusTextActive,
                   ]}
                 >
                   All ({vendorCounts.all})
@@ -527,14 +602,18 @@ export function HomeScreen({
                 onPress={() => setVendorStatusFilter("DUE")}
                 style={[
                   styles.inlineStatusBtn,
-                  vendorStatusFilter === "DUE" && styles.inlineStatusBtnDueActive,
+                  vendorStatusFilter === "DUE" &&
+                    styles.inlineStatusBtnDueActive,
                 ]}
               >
-                <View style={[styles.filterDot, { backgroundColor: colors.danger }]} />
+                <View
+                  style={[styles.filterDot, { backgroundColor: colors.danger }]}
+                />
                 <Text
                   style={[
                     styles.inlineStatusText,
-                    vendorStatusFilter === "DUE" && styles.inlineStatusTextActive,
+                    vendorStatusFilter === "DUE" &&
+                      styles.inlineStatusTextActive,
                   ]}
                 >
                   Due ({vendorCounts.due})
@@ -545,35 +624,24 @@ export function HomeScreen({
                 onPress={() => setVendorStatusFilter("SETTLED")}
                 style={[
                   styles.inlineStatusBtn,
-                  vendorStatusFilter === "SETTLED" && styles.inlineStatusBtnSettledActive,
+                  vendorStatusFilter === "SETTLED" &&
+                    styles.inlineStatusBtnSettledActive,
                 ]}
               >
-                <View style={[styles.filterDot, { backgroundColor: colors.brandHighlight }]} />
+                <View
+                  style={[
+                    styles.filterDot,
+                    { backgroundColor: colors.brandHighlight },
+                  ]}
+                />
                 <Text
                   style={[
                     styles.inlineStatusText,
-                    vendorStatusFilter === "SETTLED" && styles.inlineStatusTextActive,
+                    vendorStatusFilter === "SETTLED" &&
+                      styles.inlineStatusTextActive,
                   ]}
                 >
                   Settled ({vendorCounts.settled})
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setVendorStatusFilter("ADVANCE")}
-                style={[
-                  styles.inlineStatusBtn,
-                  vendorStatusFilter === "ADVANCE" && styles.inlineStatusBtnAdvanceActive,
-                ]}
-              >
-                <View style={[styles.filterDot, { backgroundColor: colors.information }]} />
-                <Text
-                  style={[
-                    styles.inlineStatusText,
-                    vendorStatusFilter === "ADVANCE" && styles.inlineStatusTextActive,
-                  ]}
-                >
-                  Adv ({vendorCounts.advance})
                 </Text>
               </Pressable>
             </View>
@@ -587,53 +655,18 @@ export function HomeScreen({
               bills={bills}
               selectedMonth={selectedMonth}
             />
-            <View style={styles.inlineMonthPicker}>
-              <Feather name="calendar" size={12} color={colors.information} />
-              <Text style={styles.inlineMonthLabel}>Month:</Text>
-              <TextInput
-                style={styles.inlineMonthInput}
-                value={selectedMonth}
-                onChangeText={setSelectedMonth}
-                placeholder="YYYY-MM"
-                placeholderTextColor={colors.textMuted}
-              />
-            </View>
+            <MonthYearPicker
+              selectedMonth={selectedMonth}
+              onChangeMonth={setSelectedMonth}
+              availableYears={availableYears}
+            />
           </>
         )}
-
-        {/* Right: Sleek, Outline-Free Search Input in the SAME Row */}
-        <View
-          style={[
-            styles.inlineSearchBox,
-            searchFocused && styles.inlineSearchBoxFocused,
-          ]}
-        >
-          <Feather
-            name="search"
-            size={13}
-            color={searchFocused ? colors.information : colors.textSecondary}
-          />
-          <TextInput
-            placeholder={activeTab === "vendors" ? "Search vendors..." : "Search bills..."}
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            style={styles.inlineSearchInput}
-          />
-          {searchQuery ? (
-            <Pressable onPress={() => setSearchQuery("")} hitSlop={6}>
-              <Feather name="x" size={12} color={colors.textSecondary} />
-            </Pressable>
-          ) : null}
-        </View>
       </View>
 
       {/* Tab 1: Vendors Content (Lifetime Due) */}
       {activeTab === "vendors" && (
         <View style={styles.listContainer}>
-
           {/* If specific vendor is selected (default: first vendor), show that vendor's row! */}
           {selectedVendorSummary ? (
             <View style={styles.vendorTableWrapper}>
@@ -641,12 +674,27 @@ export function HomeScreen({
                 <View style={styles.filterResultLeft}>
                   <Feather name="truck" size={14} color={colors.information} />
                   <Text style={styles.filterResultText}>
-                    Showing ledger for <Text style={styles.filterResultName}>{selectedVendorSummary.vendorName}</Text> · {selectedVendorSummary.billCount} bills · {selectedVendorSummary.paymentCount} payments
+                    Showing ledger for{" "}
+                    <Text style={styles.filterResultName}>
+                      {selectedVendorSummary.vendorName}
+                    </Text>{" "}
+                    · {selectedVendorSummary.billCount} bills ·{" "}
+                    {selectedVendorSummary.paymentCount} payments
                   </Text>
                 </View>
                 <Badge
-                  label={selectedVendorSummary.status === "DUE" ? "DUE PENDING" : selectedVendorSummary.status}
-                  variant={selectedVendorSummary.status === "DUE" ? "due" : selectedVendorSummary.status === "SETTLED" ? "settled" : "advance"}
+                  label={
+                    selectedVendorSummary.status === "DUE"
+                      ? "DUE PENDING"
+                      : selectedVendorSummary.status
+                  }
+                  variant={
+                    selectedVendorSummary.status === "DUE"
+                      ? "due"
+                      : selectedVendorSummary.status === "SETTLED"
+                        ? "settled"
+                        : "advance"
+                  }
                 />
               </View>
 
@@ -655,10 +703,20 @@ export function HomeScreen({
                   <Text style={[styles.vendorTableHeaderText, { flex: 1.6 }]}>
                     VENDOR & CONTACT
                   </Text>
-                  <Text style={[styles.vendorTableHeaderText, { flex: 1.2, paddingHorizontal: 12 }]}>
+                  <Text
+                    style={[
+                      styles.vendorTableHeaderText,
+                      { flex: 1.2, paddingHorizontal: 12 },
+                    ]}
+                  >
                     LIFETIME DUE BALANCE
                   </Text>
-                  <Text style={[styles.vendorTableHeaderText, { width: 175, textAlign: 'right', paddingRight: 14 }]}>
+                  <Text
+                    style={[
+                      styles.vendorTableHeaderText,
+                      { width: 175, textAlign: "right", paddingRight: 14 },
+                    ]}
+                  >
                     QUICK ACTIONS
                   </Text>
                 </View>
@@ -668,11 +726,15 @@ export function HomeScreen({
                 const vendorData = vendors.find(
                   (v) =>
                     v.id === selectedVendorSummary.vendorId ||
-                    v.name.toLowerCase() === selectedVendorSummary.vendorName.toLowerCase(),
+                    v.name.toLowerCase() ===
+                      selectedVendorSummary.vendorName.toLowerCase(),
                 );
                 return (
                   <VendorCard
-                    key={selectedVendorSummary.vendorId || selectedVendorSummary.vendorName}
+                    key={
+                      selectedVendorSummary.vendorId ||
+                      selectedVendorSummary.vendorName
+                    }
                     summary={selectedVendorSummary}
                     contactNumber={vendorData?.contactNumber}
                     notes={vendorData?.notes}
@@ -701,10 +763,20 @@ export function HomeScreen({
                   <Text style={[styles.vendorTableHeaderText, { flex: 1.6 }]}>
                     VENDOR & CONTACT
                   </Text>
-                  <Text style={[styles.vendorTableHeaderText, { flex: 1.2, paddingHorizontal: 12 }]}>
+                  <Text
+                    style={[
+                      styles.vendorTableHeaderText,
+                      { flex: 1.2, paddingHorizontal: 12 },
+                    ]}
+                  >
                     LIFETIME DUE BALANCE
                   </Text>
-                  <Text style={[styles.vendorTableHeaderText, { width: 175, textAlign: 'right', paddingRight: 14 }]}>
+                  <Text
+                    style={[
+                      styles.vendorTableHeaderText,
+                      { width: 175, textAlign: "right", paddingRight: 14 },
+                    ]}
+                  >
                     QUICK ACTIONS
                   </Text>
                 </View>
@@ -743,25 +815,18 @@ export function HomeScreen({
               <View style={styles.filterResultLeft}>
                 <Feather name="layers" size={14} color={colors.information} />
                 <Text style={styles.filterResultText}>
-                  Showing <Text style={styles.filterResultBold}>{showingBillsCount}</Text> {showingBillsCount === 1 ? "bill" : "bills"} for{" "}
-                  <Text style={styles.filterResultName}>{selectedCustomer}</Text> in{" "}
+                  Showing{" "}
+                  <Text style={styles.filterResultBold}>
+                    {showingBillsCount}
+                  </Text>{" "}
+                  {showingBillsCount === 1 ? "bill" : "bills"} for{" "}
+                  <Text style={styles.filterResultName}>
+                    {selectedCustomer}
+                  </Text>{" "}
+                  in{" "}
                   <Text style={styles.filterResultMonth}>{selectedMonth}</Text>
                 </Text>
               </View>
-              {selectedCustomerSummary && (
-                <Badge
-                  label={
-                    selectedCustomerSummary.status === "PAID"
-                      ? "MONTH PAID"
-                      : "DUE PENDING"
-                  }
-                  variant={
-                    selectedCustomerSummary.status === "PAID"
-                      ? "settled"
-                      : "due"
-                  }
-                />
-              )}
             </View>
           ) : null}
 
@@ -770,7 +835,8 @@ export function HomeScreen({
             <View style={styles.emptyCard}>
               <Feather name="users" size={32} color={colors.textMuted} />
               <Text style={styles.emptyMsg}>
-                No customer sales recorded yet. Add a customer sale bill in the left panel to begin.
+                No customer sales recorded yet. Add a customer sale bill in the
+                left panel to begin.
               </Text>
             </View>
           ) : (
@@ -792,9 +858,11 @@ export function HomeScreen({
         {/* Modern Sleek App Header */}
         <View style={styles.header}>
           <View style={styles.brandRow}>
-            <View style={styles.logoBadge}>
-              <Feather name="package" size={20} color={colors.information} />
-            </View>
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.headerLogoImage}
+              resizeMode="contain"
+            />
             <View>
               <Text style={styles.appTitle}>MK EXOTIC FRUITS</Text>
               <Text style={styles.appSubtitle}>
@@ -854,466 +922,3 @@ export function HomeScreen({
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.appBackground,
-  },
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-    maxWidth: 1400,
-    width: "100%",
-    alignSelf: "center",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: 14,
-  },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  logoBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "rgba(57, 124, 194, 0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  appTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-  appSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  headerMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  onlineBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  onlineDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.brandHighlight,
-  },
-  onlineText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "500",
-  },
-  desktopGrid: {
-    flexDirection: "row",
-    gap: 18,
-    alignItems: "flex-start",
-  },
-  desktopLeft: {
-    width: 440,
-  },
-  desktopRight: {
-    flex: 1,
-  },
-  mobileColumn: {
-    flexDirection: "column",
-    gap: 16,
-  },
-  leftColContainer: {
-    gap: 14,
-  },
-  rightColContainer: {
-    gap: 14,
-  },
-  statsStrip: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 12,
-  },
-  statIconRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statTitle: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  statTitleGreen: {
-    fontSize: 10,
-    color: colors.brandHighlight,
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  statTitleIndigo: {
-    fontSize: 10,
-    color: colors.information,
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  statMainVal: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: colors.textPrimary,
-    marginTop: 4,
-    fontFamily: "monospace",
-  },
-  statValGreen: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: colors.brandHighlight,
-    marginTop: 4,
-    fontFamily: "monospace",
-  },
-  statValIndigo: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: colors.information,
-    marginTop: 4,
-    fontFamily: "monospace",
-  },
-  statSubText: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 3,
-  },
-  unifiedToolbarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-    zIndex: 100,
-    marginBottom: 8,
-  },
-  toolbarSegmentControl: {
-    flexDirection: "row",
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 38,
-    alignItems: "center",
-  },
-  toolbarSegmentBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  toolbarSegmentBtnActive: {
-    backgroundColor: colors.elevatedSurface,
-  },
-  toolbarSegmentText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  toolbarSegmentTextActive: {
-    color: colors.textPrimary,
-    fontWeight: "700",
-  },
-  inlineStatusGroup: {
-    flexDirection: "row",
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 38,
-    alignItems: "center",
-    gap: 2,
-  },
-  inlineStatusBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  inlineStatusBtnActive: {
-    backgroundColor: colors.elevatedSurface,
-  },
-  inlineStatusBtnDueActive: {
-    backgroundColor: "rgba(217, 74, 80, 0.18)",
-  },
-  inlineStatusBtnSettledActive: {
-    backgroundColor: "rgba(38, 148, 91, 0.18)",
-  },
-  inlineStatusBtnAdvanceActive: {
-    backgroundColor: "rgba(57, 124, 194, 0.18)",
-  },
-  inlineStatusText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  inlineStatusTextActive: {
-    color: colors.textPrimary,
-    fontWeight: "700",
-  },
-  inlineMonthPicker: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 38,
-    paddingHorizontal: 10,
-    gap: 6,
-  },
-  inlineMonthLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "600",
-    textTransform: "uppercase",
-  },
-  inlineMonthInput: {
-    color: colors.textPrimary,
-    fontSize: 12,
-    fontWeight: "700",
-    fontFamily: "monospace",
-    padding: 0,
-    width: 68,
-    textAlign: "center",
-    // @ts-ignore
-    outlineStyle: "none",
-  },
-  inlineSearchBox: {
-    flex: 1,
-    minWidth: 140,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    height: 38,
-    paddingHorizontal: 10,
-    gap: 6,
-  },
-  inlineSearchBoxFocused: {
-    borderColor: colors.information,
-    backgroundColor: colors.elevatedSurface,
-    shadowColor: colors.information,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  inlineSearchInput: {
-    flex: 1,
-    color: colors.textPrimary,
-    fontSize: 12,
-    padding: 0,
-    // @ts-ignore
-    outlineStyle: "none",
-  },
-  filterResultBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(23, 45, 68, 0.7)",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 10,
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  filterResultLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 1,
-  },
-  filterResultText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  filterResultBold: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.textPrimary,
-    fontFamily: "monospace",
-  },
-  filterResultName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.brandHighlight,
-  },
-  filterResultMonth: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.information,
-    fontFamily: "monospace",
-  },
-  listContainer: {
-    marginTop: 2,
-  },
-  vendorTableWrapper: {
-    width: "100%",
-  },
-  vendorTableHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginBottom: 6,
-    backgroundColor: "rgba(16, 36, 58, 0.6)",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  vendorTableHeaderText: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    color: colors.textSecondary,
-    textTransform: "uppercase",
-  },
-  statusFilterRow: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-    marginBottom: 10,
-  },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  filterChipActive: {
-    backgroundColor: colors.elevatedSurface,
-    borderColor: colors.information,
-  },
-  filterChipDueActive: {
-    backgroundColor: "rgba(217, 74, 80, 0.15)",
-    borderColor: colors.danger,
-  },
-  filterChipSettledActive: {
-    backgroundColor: "rgba(38, 148, 91, 0.15)",
-    borderColor: colors.brandHighlight,
-  },
-  filterChipAdvanceActive: {
-    backgroundColor: "rgba(57, 124, 194, 0.15)",
-    borderColor: colors.information,
-  },
-  filterDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
-  },
-  filterChipText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  filterChipTextActive: {
-    color: colors.textPrimary,
-    fontWeight: "700",
-  },
-  emptyCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 32,
-    alignItems: "center",
-    gap: 10,
-  },
-  emptyMsg: {
-    color: colors.textMuted,
-    fontSize: 13,
-    textAlign: "center",
-  },
-  backupCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 14,
-  },
-  backupCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: 8,
-  },
-  backupCardTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.textPrimary,
-  },
-  backupCardSub: {
-    fontSize: 10,
-    color: colors.textMuted,
-  },
-  statusBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(38, 148, 91, 0.15)",
-    borderColor: colors.success,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 10,
-  },
-  statusBannerText: {
-    fontSize: 11,
-    color: colors.brandHighlight,
-    fontWeight: "500",
-  },
-  backupButtonsGrid: {
-    gap: 8,
-  },
-  backupBtn: {
-    paddingVertical: 8,
-  },
-});

@@ -1,30 +1,31 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { colors } from '../../core/theme';
 
-interface InputProps extends TextInputProps {
+export interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
 }
 
-export const Input = React.memo(function Input({
-  label,
-  error,
-  style,
-  ...props
-}: InputProps) {
-  return (
-    <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <TextInput
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, error ? styles.inputError : null, style]}
-        {...props}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
-});
+export const Input = React.memo(
+  forwardRef<TextInput, InputProps>(function Input(
+    { label, error, style, ...props },
+    ref
+  ) {
+    return (
+      <View style={styles.container}>
+        {label && <Text style={styles.label}>{label}</Text>}
+        <TextInput
+          ref={ref}
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, error ? styles.inputError : null, style]}
+          {...props}
+        />
+        {error && <Text style={styles.errorText}>{error}</Text>}
+      </View>
+    );
+  })
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -47,6 +48,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    // @ts-ignore
+    outlineStyle: 'none',
   },
   inputError: {
     borderColor: colors.danger,

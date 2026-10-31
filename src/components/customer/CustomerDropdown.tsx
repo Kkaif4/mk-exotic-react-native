@@ -50,6 +50,14 @@ export const CustomerDropdown = React.memo(function CustomerDropdown({
 
   const selectedCount = customerBillCounts.get(selectedCustomer.trim().toLowerCase()) || 0;
 
+  const handleSelectTop = () => {
+    if (filteredCustomers.length > 0) {
+      onSelectCustomer(filteredCustomers[0]);
+      setIsOpen(false);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Inline Compact Dropdown Trigger */}
@@ -84,6 +92,8 @@ export const CustomerDropdown = React.memo(function CustomerDropdown({
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              returnKeyType="done"
+              onSubmitEditing={handleSelectTop}
               autoFocus
             />
             {searchQuery ? (

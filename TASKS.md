@@ -100,3 +100,33 @@
 
 
 
+
+## Phase 12: Month/Year Dropdown Pickers & Keyboard Keystroke Navigation Chaining
+- [x] Month & Year Dropdown: Created `MonthYearPicker.tsx` with dedicated Month and Year floating dropdown menus, replacing manual `YYYY-MM` string typing
+- [x] Enter Key Selection: In `CustomerDropdown.tsx` and `VendorDropdown.tsx`, hitting Enter instantly selects the top matching item, closes dropdown, and updates selection
+- [x] Chained Bill Entry Keystrokes: In `BillForm.tsx`:
+  - `entityName`: hitting Enter selects top autocomplete suggestion if available and advances focus to `billNumber`
+  - `billNumber`: hitting Enter advances focus to `date`
+  - `date`: hitting Enter advances focus to `amount`
+  - `amount`: hitting Enter saves the bill
+  - On bill save: form clears and automatically refocuses back to the top `entityName` field for rapid entry
+- [x] User modifications preserved in `HomeScreen.tsx` (default customer view, tab order, simplified filter pills)
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+## Phase 13: App Logo Branding, Smooth Flash Screen, Full Calendar Spectrum & Styled Warning Modals
+- [x] App Logo Branding: Integrated `mk-exotic-loo-new.png` into `assets/logo.png`, configured in `app.json` (icon, splash, favicon, adaptive-icon) and prominently rendered in `HomeScreen.tsx` header
+- [x] 3-Second Animated Flash Screen: Built `SplashScreen.tsx` featuring 60/120fps hardware GPU Compositor keyframes, smooth progress bar, and dynamic initialization messages
+- [x] Comprehensive Calendar Years: Updated `MonthYearPicker.tsx` to include full calendar spectrum (2020–2035+) along with dynamic inclusion of any future/past years from bills (e.g. 2029)
+- [x] Active Tab Bright Highlight: Selected tab in `HomeScreen.tsx` highlighted with bright emerald green (`colors.buttonHover`), elevated shadow, and crisp white typography/icons
+- [x] Polished Dark-Mode Warning Popup: Created `WarningModal.tsx` and universal bridge in `confirm.ts`, replacing browser `window.confirm` with glowing danger badges and styled actions
+- [x] Two-Step Wipeout Confirmation: Added "Wipe Out All Data" with Step 1 warning dialog followed by Step 2 written confirmation requiring typing "DELETE" to permanently purge records
+- [x] Automatic Safety Backup: Wiping out data automatically executes and downloads a full JSON backup file regardless before records are erased
+- [x] Descending Date Ordering: All bills across customer ledger cards, PDF exports, and storage queries strictly sorted in descending order of date (newest bills first)
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+
+## Phase 14: Final Windows Desktop Executable (.exe) Build
+- [x] Web Production Bundle: Bundled all React Native Web assets, icons, fonts, and modules via `npx expo export -p web` into `dist/`
+- [x] Electron Packaging: Configured `electron-builder.json` and `electron-main.js` with offline local storage persistence, custom icon, and 64-bit Windows portable target
+- [x] Executable Generation: Successfully generated `dist-electron/MK Exotic Fruits 1.0.0.exe` (173MB standalone Windows PE32 GUI executable)
+- [x] Root Directory Placement: Stored executable directly in project root as `MK-Exotic-Fruits.exe`
+- [x] Zero Git Push: Strictly adhered to user directive (no code pushed to remote, no external CI build)

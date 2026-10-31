@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { VendorDetailScreen } from './src/screens/VendorDetailScreen';
+import { WarningModalContainer } from './src/components/common/WarningModal';
+import { SplashScreen } from './src/components/common/SplashScreen';
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<'home' | 'vendorDetail'>('home');
   const [selectedVendor, setSelectedVendor] = useState<{ id: string; name: string } | null>(null);
 
@@ -20,14 +23,21 @@ export default function App() {
   return (
     <>
       <StatusBar style="light" />
-      {currentScreen === 'home' || !selectedVendor ? (
-        <HomeScreen onNavigateToVendor={handleNavigateToVendor} />
+      {showSplash ? (
+        <SplashScreen onFinish={() => setShowSplash(false)} durationMs={3000} />
       ) : (
-        <VendorDetailScreen
-          vendorId={selectedVendor.id}
-          vendorName={selectedVendor.name}
-          onBack={handleBackToHome}
-        />
+        <>
+          {currentScreen === 'home' || !selectedVendor ? (
+            <HomeScreen onNavigateToVendor={handleNavigateToVendor} />
+          ) : (
+            <VendorDetailScreen
+              vendorId={selectedVendor.id}
+              vendorName={selectedVendor.name}
+              onBack={handleBackToHome}
+            />
+          )}
+          <WarningModalContainer />
+        </>
       )}
     </>
   );

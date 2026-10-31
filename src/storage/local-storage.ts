@@ -38,6 +38,19 @@ async function setItem(key: string, value: string): Promise<void> {
   memoryStore[key] = value;
 }
 
+async function removeItem(key: string): Promise<void> {
+  try {
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    if (AsyncStorage?.removeItem) {
+      await AsyncStorage.removeItem(key);
+      return;
+    }
+  } catch {
+    // Fallback to memory
+  }
+  delete memoryStore[key];
+}
+
 export class NativeAppStorage implements IAppStorage {
   async getDeviceId(): Promise<string> {
     let id = await getItem(KEYS.DEVICE_ID);
@@ -50,7 +63,12 @@ export class NativeAppStorage implements IAppStorage {
 
   async getBills(): Promise<Bill[]> {
     const raw = await getItem(KEYS.BILLS);
-    return raw ? JSON.parse(raw) : [];
+    const bills: Bill[] = raw ? JSON.parse(raw) : [];
+    return bills.sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) ||
+        (b.createdAt || '').localeCompare(a.createdAt || '')
+    );
   }
 
   async saveBills(bills: Bill[]): Promise<void> {
@@ -303,6 +321,7 @@ export class NativeAppStorage implements IAppStorage {
 
   async clearAll(): Promise<void> {
     for (const key of Object.values(KEYS)) {
+      await removeItem(key);
       delete memoryStore[key];
     }
   }
