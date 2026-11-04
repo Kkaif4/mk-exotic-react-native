@@ -130,3 +130,17 @@
 - [x] Executable Generation: Successfully generated `dist-electron/MK Exotic Fruits 1.0.0.exe` (173MB standalone Windows PE32 GUI executable)
 - [x] Root Directory Placement: Stored executable directly in project root as `MK-Exotic-Fruits.exe`
 - [x] Zero Git Push: Strictly adhered to user directive (no code pushed to remote, no external CI build)
+
+## Phase 15: Windows Desktop Blank Window Bug Resolution & Production Packaging
+- [x] Root Cause Diagnosed via Headless Electron:
+  - Expo production bundling mangles `ExpoFontLoader` into an anonymous closure `function(){return a}`, causing `expo-modules-core`'s `registerWebModule` to throw `Uncaught Error: Module implementation must be a class`
+  - This fatal error crashed React Native Web before `#root` rendered, causing a blank white window on desktop
+  - In addition, prior `dist/index.html` regex replacement corrupted script paths into `.//_expo/...`
+- [x] Auto-Patch Script Created: Added `scripts/patch-expo.js` and hooked into `package.json` (`postinstall` and `build:web`) to safely register web modules with fallback names even when minified
+- [x] Electron Server Hardened: Updated `electron-main.js` with memory-safe `fs.readFile` handling, clean path normalization avoiding UNC path issues on Windows, and F12 DevTools developer shortcut
+- [x] Production Verification in Xvfb: Verified the app runs through headless Electron, renders the splash screen, and successfully mounts the full HomeScreen with tabs, ledgers, and forms
+- [x] Clean Build Generated:
+  - Generated portable executable: `MK-Exotic-Fruits.exe` (173MB) in root directory
+  - Generated extracted folder archive: `MK-Exotic-Fruits-Folder.zip` (261MB) in root directory
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green
+

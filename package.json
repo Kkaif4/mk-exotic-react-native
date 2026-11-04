@@ -13,7 +13,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "build:web": "expo export -p web && node -e \"const f='dist/index.html';let c=require('fs').readFileSync(f,'utf8');c=c.replace(/src=\\\"/g, 'src=\\\"./').replace(/href=\\\"/g, 'href=\\\"./');require('fs').writeFileSync(f,c);\"",
+    "postinstall": "node scripts/patch-expo.js",
+    "build:web": "node scripts/patch-expo.js && expo export -p web",
     "build:exe": "npm run build:web && npx electron-builder --win --x64"
   },
   "dependencies": {

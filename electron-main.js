@@ -43,8 +43,8 @@ if (!gotTheLock) {
         try {
           let reqPath = decodeURIComponent(req.url.split('?')[0]);
           if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
-          const safePath = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, '');
-          const filePath = path.join(distDir, safePath);
+          const cleanRel = reqPath.replace(/^[/\\]+/, '').replace(/^(\.\.[\/\\])+/, '');
+          const filePath = path.join(distDir, cleanRel);
 
           fs.stat(filePath, (err, stats) => {
             if (err || !stats.isFile()) {
@@ -64,11 +64,18 @@ if (!gotTheLock) {
 
             const ext = path.extname(filePath).toLowerCase();
             const contentType = mimeTypes[ext] || 'application/octet-stream';
-            res.writeHead(200, {
-              'Content-Type': contentType,
-              'Cache-Control': 'no-cache',
+            fs.readFile(filePath, (readErr, data) => {
+              if (readErr) {
+                res.writeHead(500);
+                res.end('Read Error');
+              } else {
+                res.writeHead(200, {
+                  'Content-Type': contentType,
+                  'Cache-Control': 'no-cache',
+                });
+                res.end(data);
+              }
             });
-            fs.createReadStream(filePath).pipe(res);
           });
         } catch {
           res.writeHead(500);
@@ -116,6 +123,17 @@ if (!gotTheLock) {
       console.error('Server start failed, falling back to loadFile:', err);
       await mainWindow.loadFile(path.join(distDir, 'index.html'));
     }
+
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+        mainWindow.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    });
+
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      console.error(`[Load Error] ${errorCode} - ${errorDescription} (${validatedURL})`);
+    });
 
     mainWindow.focus();
 
