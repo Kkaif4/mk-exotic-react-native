@@ -144,3 +144,20 @@
   - Generated extracted folder archive: `MK-Exotic-Fruits-Folder.zip` (261MB) in root directory
 - [x] All 6 test suites with 28 tests passing cleanly with 100% green
 
+## Phase 16: Free-Form Window Shrinking & Fluid Tiered Responsiveness
+- [x] Unlocked Window Minimum Dimensions: Lowered Electron `BrowserWindow` minimum constraints from rigid `minWidth: 940, minHeight: 640` down to `minWidth: 380, minHeight: 500`, allowing users to shrink the desktop app freely down to compact portrait dimensions.
+- [x] Tiered Adaptive Breakpoints:
+  - Desktop View (`width >= 1024px`): Spacious 2-column layout with fluid flexbox columns (`flex: 0.38, minWidth: 350, maxWidth: 440` on left, `flex: 0.62, minWidth: 0` on right).
+  - Tablet / Half-Screen View (`640px <= width < 1024px`): Single-column view with full-width bill entry form, full-width toolbar, and full-width ledger cards.
+  - Compact / Shrunk Window View (`width < 640px`): Single-column with vertically stacked 3-card stats strip to ensure currency amounts and badges are never squished or truncated. Reduced screen margins (10px) to maximize usable workspace.
+- [x] Flexible Header & Toolbars:
+  - Enabled wrap on `HomeScreen` and `VendorDetailScreen` title headers and action buttons.
+  - Customer Ledger Card footer actions (`PDF Statement` and `Mark Paid`) wrap gracefully on narrow widths with `gap: 10`.
+- [x] Automated Headless Verification:
+  - Verified with Xvfb across viewports: 1280px, 900px, 600px, 420px, and 380px. Zero horizontal overflow or content cutoff even at 380px width.
+- [x] Production Desktop Executables Rebuilt:
+  - Standalone portable executable: `MK-Exotic-Fruits.exe` updated in root directory.
+  - Standalone unpacked folder archive: `MK-Exotic-Fruits-Folder.zip` updated in root directory.
+- [x] All 6 test suites with 28 tests passing cleanly with 100% green.
+
+

@@ -31,7 +31,7 @@ export function VendorDetailScreen({
   onBack,
 }: VendorDetailScreenProps) {
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 840;
+  const isDesktop = width >= 1024;
 
   const {
     vendor,
@@ -487,6 +487,7 @@ const styles = StyleSheet.create({
   },
   titleCol: {
     flex: 1,
+    minWidth: 200,
   },
   vendorName: {
     fontSize: 20,
@@ -505,10 +506,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   desktopLeft: {
-    width: 440,
+    flex: 0.38,
+    minWidth: 350,
+    maxWidth: 440,
   },
   desktopRight: {
-    flex: 1,
+    flex: 0.62,
+    minWidth: 0,
   },
   mobileLayout: {
     flex: 1,

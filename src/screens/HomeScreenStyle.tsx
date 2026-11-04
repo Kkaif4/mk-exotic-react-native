@@ -13,6 +13,10 @@ export const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  containerCompact: {
+    padding: 10,
+    paddingBottom: 30,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -21,11 +25,18 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingBottom: 14,
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  headerCompact: {
+    marginBottom: 12,
+    paddingBottom: 10,
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flexShrink: 1,
   },
   headerLogoImage: {
     width: 42,
@@ -88,32 +99,47 @@ export const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   desktopLeft: {
-    width: 440,
+    flex: 0.38,
+    minWidth: 350,
+    maxWidth: 440,
   },
   desktopRight: {
-    flex: 1,
+    flex: 0.62,
+    minWidth: 0,
   },
   mobileColumn: {
     flexDirection: "column",
     gap: 16,
+    width: "100%",
   },
   leftColContainer: {
     gap: 14,
+    width: "100%",
   },
   rightColContainer: {
     gap: 14,
+    width: "100%",
   },
   statsStrip: {
     flexDirection: "row",
     gap: 10,
+    flexWrap: "wrap",
+    width: "100%",
+  },
+  statsStripCompact: {
+    flexDirection: "column",
   },
   statCard: {
     flex: 1,
+    minWidth: 140,
     backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 12,
+  },
+  statCardCompact: {
+    minWidth: "100%",
   },
   statIconRow: {
     flexDirection: "row",

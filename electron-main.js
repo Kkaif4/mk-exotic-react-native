@@ -99,8 +99,8 @@ if (!gotTheLock) {
     mainWindow = new BrowserWindow({
       width: 1360,
       height: 860,
-      minWidth: 940,
-      minHeight: 640,
+      minWidth: 380,
+      minHeight: 500,
       title: 'MK Exotic Fruits - Billing & Cumulative Ledger',
       icon: iconPath,
       backgroundColor: '#071629',

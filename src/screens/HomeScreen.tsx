@@ -47,7 +47,8 @@ export function HomeScreen({
   onNavigateToVendor: (vendorId: string, vendorName: string) => void;
 }) {
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 860;
+  const isDesktop = width >= 1024;
+  const isCompact = width < 640;
 
   const { bills, addBill, deleteBill, refreshBills } = useBills();
   const {
@@ -482,8 +483,8 @@ export function HomeScreen({
   const rightColumn = (
     <View style={styles.rightColContainer}>
       {/* Top 3-Card Summary Strip */}
-      <View style={styles.statsStrip}>
-        <View style={styles.statCard}>
+      <View style={[styles.statsStrip, isCompact && styles.statsStripCompact]}>
+        <View style={[styles.statCard, isCompact && styles.statCardCompact]}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitle}>Total Invoices</Text>
             <Feather name="file" size={13} color={colors.textSecondary} />
@@ -494,7 +495,7 @@ export function HomeScreen({
           </Text>
         </View>
 
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, isCompact && styles.statCardCompact]}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitleGreen}>Month Sales</Text>
             <Feather
@@ -509,7 +510,7 @@ export function HomeScreen({
           <Text style={styles.statSubText}>Customer Outstandings</Text>
         </View>
 
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, isCompact && styles.statCardCompact]}>
           <View style={styles.statIconRow}>
             <Text style={styles.statTitleIndigo}>Month Purchases</Text>
             <Feather name="shopping-bag" size={13} color={colors.information} />
@@ -854,18 +855,23 @@ export function HomeScreen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          isCompact && styles.containerCompact,
+        ]}
+      >
         {/* Modern Sleek App Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, isCompact && styles.headerCompact]}>
           <View style={styles.brandRow}>
             <Image
               source={require("../../assets/logo.png")}
               style={styles.headerLogoImage}
               resizeMode="contain"
             />
-            <View>
+            <View style={{ flexShrink: 1 }}>
               <Text style={styles.appTitle}>MK EXOTIC FRUITS</Text>
-              <Text style={styles.appSubtitle}>
+              <Text style={styles.appSubtitle} numberOfLines={1}>
                 Enterprise Accounting · Offline-First Ledger & Settlement
               </Text>
             </View>

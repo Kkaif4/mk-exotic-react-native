@@ -208,6 +208,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: 10,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   dueLabel: {
     fontSize: 11,
@@ -229,6 +231,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   pdfBtn: {
     paddingHorizontal: 12,
